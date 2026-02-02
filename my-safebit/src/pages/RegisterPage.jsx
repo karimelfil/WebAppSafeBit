@@ -1,7 +1,7 @@
+// this is register page
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
-// shadcn/ui (adjust paths to your project)
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -10,21 +10,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Checkbox } from "../components/ui/checkbox";
 import { Alert, AlertDescription } from "../components/ui/alert";
 
-// icons & assets
+
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import logoImage from "../assets/logos/safebite.png";
 
 // services
 import { getAllAllergies, getAllDiseases, registerApi } from "../services/register";
 
-/* ----------------------- Utils: Validation ----------------------- */
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Allow digits, spaces, parentheses, +, - up to 20 chars (aligns with [Phone] + [StringLength(20)])
+
 const PHONE_REGEX = /^[0-9+\-() \s]{0,20}$/;
 
 const trimOrNull = (v) => (typeof v === "string" ? v.trim() : v) || null;
 
-// Map server field name -> client state key (to place errors under inputs)
+
 const mapServerFieldToClient = (serverKey) => {
   const key = (serverKey || "").toLowerCase();
   if (key.startsWith("firstname")) return "firstName";
@@ -49,11 +49,7 @@ const mergeFieldErrors = (base, field, message) => {
   };
 };
 
-/** Extracts a human-friendly error from axios error.
- *  - Supports plain string bodies (BadRequest("..."))
- *  - Supports ValidationProblemDetails: { errors: {...}, title/detail }
- *  - Supports ProblemDetails: { title, detail, message, error }
- */
+
 const parseApiError = (err) => {
   let summary = "Something went wrong. Please check your inputs.";
   let fieldErrors = {};
@@ -64,7 +60,6 @@ const parseApiError = (err) => {
 
   const data = err.response.data;
 
-  // 1) Plain string error (common for BadRequest("..."))
   if (typeof data === "string") {
     summary = data;
 
@@ -108,7 +103,7 @@ const parseApiError = (err) => {
     return { summary, fieldErrors };
   }
 
-  // 3) Fallback
+  //  Fallback
   summary = err.response.statusText || summary;
   return { summary, fieldErrors };
 };
@@ -169,7 +164,7 @@ export function RegisterPage({ onNavigateToLogin }) {
     };
   }, []);
 
-  /* -------- Client-side validation (mirror DataAnnotations) -------- */
+  /* -------- Client-side validation  -------- */
   const clientValidatePersonal = useMemo(() => {
     return () => {
       const fe = {};
@@ -292,7 +287,6 @@ export function RegisterPage({ onNavigateToLogin }) {
       setStep("success");
       setTimeout(() => onNavigateToLogin?.(), 3000);
     } catch (err) {
-      // ✅ Show real backend message instead of generic "Bad Request"
       const { summary, fieldErrors: apiFieldErrors } = parseApiError(err);
       setFieldErrors(apiFieldErrors);
       setFormError(summary);
@@ -443,7 +437,6 @@ export function RegisterPage({ onNavigateToLogin }) {
                     Gender <span className="text-red-500">*</span>
                   </Label>
 
-                  {/* ▼▼▼ Improved Select styling ▼▼▼ */}
                   <Select
                     value={gender}
                     onValueChange={(v) => { setGender(v); clearFieldError("gender"); }}
@@ -460,7 +453,6 @@ export function RegisterPage({ onNavigateToLogin }) {
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
 
-                    {/* Force a solid panel with shadow & high z-index */}
                     <SelectContent
                       position="popper"
                       sideOffset={6}

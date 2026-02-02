@@ -1,3 +1,4 @@
+// this file handles authentication-related API calls
 import { http } from "./http";
 
 // LOGIN

@@ -1,3 +1,4 @@
+// this file is login page component
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -11,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 
 
 export function LoginPage({ onLogin, onNavigateToRegister }) {
+  // ---- State ----
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -26,7 +28,7 @@ const navigate = useNavigate();
     e.preventDefault();
     setErrorMsg(null);
 
-    // ✅ CUSTOM VALIDATION (NO BROWSER POPUPS)
+    //  CUSTOM VALIDATION 
     if (!email.trim()) {
       setErrorMsg('Email is required.');
       return;
@@ -71,7 +73,7 @@ const navigate = useNavigate();
     }
   };
 
-  // ---- FORGOT PASSWORD (mock) ----
+  // ---- FORGOT PASSWORD  ----
   const handleForgotPassword = (e) => {
     e.preventDefault();
     setResetSent(true);
@@ -146,7 +148,7 @@ const navigate = useNavigate();
         </CardHeader>
 
         <CardContent className="p-4">
-          {/* ❌ Error Message */}
+          {/*  Error Message */}
           {errorMsg && (
             <Alert className="mb-4 bg-red-50 border-red-200">
               <AlertDescription className="text-red-700">
@@ -155,7 +157,7 @@ const navigate = useNavigate();
             </Alert>
           )}
 
-          {/* ✅ noValidate disables browser validation */}
+          {/*  noValidate disables browser validation */}
           <form onSubmit={handleLogin} noValidate className="space-y-4">
             <div className="space-y-2">
               <Label>Email Address</Label>
