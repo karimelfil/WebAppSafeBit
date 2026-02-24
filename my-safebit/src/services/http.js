@@ -7,14 +7,12 @@ export const http = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach token automatically
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem("sb_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Global 401 handling (optional)
 http.interceptors.response.use(
   (res) => res,
   (error) => {
@@ -25,3 +23,4 @@ http.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+

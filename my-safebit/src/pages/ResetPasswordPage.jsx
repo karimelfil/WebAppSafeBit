@@ -1,4 +1,3 @@
-// Reset Password Page
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
@@ -118,3 +117,4 @@ export function ResetPasswordPage() {
     </div>
   );
 }
+

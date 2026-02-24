@@ -1,4 +1,3 @@
-// this is register page
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -14,7 +13,6 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import logoImage from "../assets/logos/safebite.png";
 
-// services
 import { getAllAllergies, getAllDiseases, registerApi } from "../services/register";
 
 
@@ -38,7 +36,7 @@ const mapServerFieldToClient = (serverKey) => {
   if (key.startsWith("confirmpassword")) return "confirmPassword";
   if (key.startsWith("allergyids")) return "selectedAllergies";
   if (key.startsWith("diseaseids")) return "selectedDiseases";
-  return null; // unknown -> show in summary alert
+  return null;
 };
 
 const mergeFieldErrors = (base, field, message) => {
@@ -63,7 +61,6 @@ const parseApiError = (err) => {
   if (typeof data === "string") {
     summary = data;
 
-    // Try to map well-known messages to a field for inline display
     const text = data.toLowerCase();
     if (text.includes("email")) fieldErrors.email = data;
     if (text.includes("passwords do not match") || (text.includes("passwords") && text.includes("match"))) {
@@ -75,9 +72,7 @@ const parseApiError = (err) => {
     return { summary, fieldErrors };
   }
 
-  // 2) Object shape
   if (data && typeof data === "object") {
-    // ValidationProblemDetails: errors dictionary
     if (data.errors && typeof data.errors === "object") {
       for (const [serverField, messages] of Object.entries(data.errors)) {
         const clientField = mapServerFieldToClient(serverField);
@@ -89,12 +84,10 @@ const parseApiError = (err) => {
       }
     }
 
-    // ProblemDetails fallback summary
     const pdSummary = data.title || data.detail || data.message || data.error;
     if (typeof pdSummary === "string" && pdSummary.trim()) {
       summary = pdSummary;
     } else if (!Object.keys(fieldErrors).length && typeof data === "object") {
-      // last resort: stringify small objects
       try {
         const s = JSON.stringify(data);
         if (s && s.length < 300) summary = s;
@@ -103,7 +96,6 @@ const parseApiError = (err) => {
     return { summary, fieldErrors };
   }
 
-  //  Fallback
   summary = err.response.statusText || summary;
   return { summary, fieldErrors };
 };
@@ -111,34 +103,29 @@ const parseApiError = (err) => {
 export function RegisterPage({ onNavigateToLogin }) {
   const [step, setStep] = useState("personal");
 
-  // Personal info
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [dob, setDob] = useState(""); // yyyy-mm-dd
-  const [gender, setGender] = useState(""); // "male" | "female"
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Health info
-  const [hasAllergies, setHasAllergies] = useState(null); // true | false | null
-  const [hasDiseases, setHasDiseases] = useState(null);   // true | false | null
-  const [isPregnant, setIsPregnant] = useState(null);     // true | false | null (only if female)
+  const [hasAllergies, setHasAllergies] = useState(null);
+  const [hasDiseases, setHasDiseases] = useState(null);
+  const [isPregnant, setIsPregnant] = useState(null);
 
-  // Data from API
-  const [allergies, setAllergies] = useState([]); // [{id, name}]
-  const [diseases, setDiseases] = useState([]);   // [{id, name}]
-  const [selectedAllergies, setSelectedAllergies] = useState([]); // [ids]
-  const [selectedDiseases, setSelectedDiseases] = useState([]);   // [ids]
+  const [allergies, setAllergies] = useState([]);
+  const [diseases, setDiseases] = useState([]);
+  const [selectedAllergies, setSelectedAllergies] = useState([]);
+  const [selectedDiseases, setSelectedDiseases] = useState([]);
 
-  // UI state
-  const [formError, setFormError] = useState(null);       // summary/top error from client or API
-  const [fieldErrors, setFieldErrors] = useState({});     // { fieldName: "message" }
+  const [formError, setFormError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [loadingMeta, setLoadingMeta] = useState(true);
 
-  /* ----------------------- Load reference data ----------------------- */
   useEffect(() => {
     let cancelled = false;
 
@@ -164,23 +151,19 @@ export function RegisterPage({ onNavigateToLogin }) {
     };
   }, []);
 
-  /* -------- Client-side validation  -------- */
   const clientValidatePersonal = useMemo(() => {
     return () => {
       const fe = {};
       let summary = null;
 
-      // FirstName: optional, max 50
       if (firstName && firstName.length > 50) {
         fe.firstName = "First name cannot exceed 50 characters.";
       }
 
-      // LastName: optional, max 50
       if (lastName && lastName.length > 50) {
         fe.lastName = "Last name cannot exceed 50 characters.";
       }
 
-      // Email: required, EmailAddress, max 100
       if (!email) {
         fe.email = "Email is required.";
       } else if (!EMAIL_REGEX.test(email)) {
@@ -189,7 +172,6 @@ export function RegisterPage({ onNavigateToLogin }) {
         fe.email = "Email cannot exceed 100 characters.";
       }
 
-      // Phone: optional, [Phone], max 20
       if (phone) {
         if (phone.length > 20) {
           fe.phone = "Phone cannot exceed 20 characters.";
@@ -198,17 +180,14 @@ export function RegisterPage({ onNavigateToLogin }) {
         }
       }
 
-      // DOB: required
       if (!dob) {
         fe.dob = "Date of birth is required.";
       }
 
-      // Gender: required (enum)
       if (!gender) {
         fe.gender = "Gender is required.";
       }
 
-      // Password: required, min 8, max 100
       if (!password) {
         fe.password = "Password is required.";
       } else {
@@ -216,7 +195,6 @@ export function RegisterPage({ onNavigateToLogin }) {
         else if (password.length > 100) fe.password = "Password cannot exceed 100 characters.";
       }
 
-      // ConfirmPassword: required + match
       if (!confirmPassword) {
         fe.confirmPassword = "Confirm password is required.";
       } else if (password && confirmPassword !== password) {
@@ -224,7 +202,6 @@ export function RegisterPage({ onNavigateToLogin }) {
       }
 
       if (Object.keys(fe).length > 0) {
-        // Use the first field error as the summary message
         summary = Object.values(fe)[0];
       }
       return { fe, summary };
@@ -239,14 +216,12 @@ export function RegisterPage({ onNavigateToLogin }) {
     });
   };
 
-  /* ----------------------- Toggle helpers ----------------------- */
   const toggleId = (id, checked, setter) => {
-    const isChecked = !!checked; // normalize boolean | "indeterminate"
+    const isChecked = !!checked;
     const numId = typeof id === "string" && !Number.isNaN(Number(id)) ? Number(id) : id;
     setter((prev) => (isChecked ? [...new Set([...prev, numId])] : prev.filter((x) => x !== numId)));
   };
 
-  /* ----------------------- Submit handlers ----------------------- */
   const handlePersonalSubmit = (e) => {
     e.preventDefault();
     setFormError(null);
@@ -273,8 +248,8 @@ export function RegisterPage({ onNavigateToLogin }) {
         lastName: trimOrNull(lastName),
         email: email?.trim(),
         phone: trimOrNull(phone),
-        dateOfBirth: dob,                        // yyyy-mm-dd from input[type=date]
-        gender: gender === "male" ? 1 : 2,      // enum numeric value expected by API
+        dateOfBirth: dob,
+        gender: gender === "male" ? 1 : 2,
         isPregnant: gender === "female" ? !!isPregnant : false,
         password,
         confirmPassword,
@@ -295,7 +270,6 @@ export function RegisterPage({ onNavigateToLogin }) {
     }
   };
 
-  /* ----------------------- UI helpers ----------------------- */
   const inputErrorClass = (field) =>
     fieldErrors[field] ? "border-red-500 focus-visible:ring-red-500" : "";
 
@@ -306,7 +280,6 @@ export function RegisterPage({ onNavigateToLogin }) {
       <p className="text-xs text-gray-500">{defaultText}</p>
     ) : null;
 
-  /* ----------------------- Success screen ----------------------- */
   if (step === "success") {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-blue-50">
@@ -325,7 +298,6 @@ export function RegisterPage({ onNavigateToLogin }) {
     );
   }
 
-  /* ----------------------- Main form ----------------------- */
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-blue-50">
       <Card className="w-full max-w-2xl">
@@ -347,7 +319,6 @@ export function RegisterPage({ onNavigateToLogin }) {
             {step === "personal" ? "Step 1 of 2: Personal Information" : "Step 2 of 2: Health Information"}
           </CardDescription>
 
-          {/* Progress */}
           <div className="flex gap-2 pt-4">
             <div className={`h-2 flex-1 rounded ${step === "personal" ? "bg-green-600" : "bg-green-300"}`} />
             <div className={`h-2 flex-1 rounded ${step === "health" ? "bg-green-600" : "bg-gray-200"}`} />
@@ -362,7 +333,6 @@ export function RegisterPage({ onNavigateToLogin }) {
           )}
 
           {step === "personal" ? (
-            /* ----------------------- PERSONAL STEP ----------------------- */
             <form onSubmit={handlePersonalSubmit} noValidate className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -514,7 +484,6 @@ export function RegisterPage({ onNavigateToLogin }) {
               </Button>
             </form>
           ) : (
-            /* ----------------------- HEALTH STEP ----------------------- */
             <form onSubmit={handleHealthSubmit} noValidate className="space-y-6">
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertDescription className="text-blue-800">
@@ -523,7 +492,6 @@ export function RegisterPage({ onNavigateToLogin }) {
                 </AlertDescription>
               </Alert>
 
-              {/* Allergies */}
               <div className="space-y-3">
                 <Label>Do you have any allergies?</Label>
                 <div className="flex gap-4">
@@ -573,7 +541,6 @@ export function RegisterPage({ onNavigateToLogin }) {
                 )}
               </div>
 
-              {/* Diseases */}
               <div className="space-y-3">
                 <Label>Do you suffer from any chronic food-related diseases?</Label>
                 <div className="flex gap-4">
@@ -623,7 +590,6 @@ export function RegisterPage({ onNavigateToLogin }) {
                 )}
               </div>
 
-              {/* Pregnancy — only for female */}
               {gender === "female" && (
                 <div className="space-y-3">
                   <Label>Are you currently pregnant?</Label>

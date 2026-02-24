@@ -1,4 +1,3 @@
-// this is forgot password page
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -10,7 +9,6 @@ import logoImage from "../assets/logos/safebite.png";
 import axios from "axios";
 
 export function ForgotPasswordPage({ onBack }) {
-  // State variables
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -98,3 +96,4 @@ export function ForgotPasswordPage({ onBack }) {
     </div>
   );
 }
+

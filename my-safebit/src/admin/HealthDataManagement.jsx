@@ -1,4 +1,3 @@
-// this file manages health-related data such as allergies and chronic diseases
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -34,8 +33,9 @@ import {
   deleteDisease,
 } from "../services/adminHealthServices";
 
+const PAGE_SIZE = 10;
+
 export default function HealthDataManagement() {
-    // -------- State --------
   const [allergies, setAllergies] = useState([]);
   const [diseases, setDiseases] = useState([]);
   const [activeTab, setActiveTab] = useState("allergies");
@@ -44,7 +44,7 @@ export default function HealthDataManagement() {
   const [errMessage, setErrMessage] = useState("");
 
   const [showDialog, setShowDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState("add"); // 'add' | 'edit' | 'delete'
+  const [dialogMode, setDialogMode] = useState("add");
   const [selectedItem, setSelectedItem] = useState(null);
 
   const [formName, setFormName] = useState("");
@@ -52,8 +52,9 @@ export default function HealthDataManagement() {
 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [allergyPage, setAllergyPage] = useState(1);
+  const [diseasePage, setDiseasePage] = useState(1);
 
-  // -------- Fetchers --------
   const fetchAllAllergies = async () => {
     const list = await getAllAllergens();
     setAllergies(list);
@@ -82,7 +83,23 @@ export default function HealthDataManagement() {
     fetchAll();
   }, []);
 
-  // -------- Dialog Openers --------
+  useEffect(() => {
+    const allergyPages = Math.max(1, Math.ceil(allergies.length / PAGE_SIZE));
+    const diseasePages = Math.max(1, Math.ceil(diseases.length / PAGE_SIZE));
+
+    if (allergyPage > allergyPages) {
+      setAllergyPage(allergyPages);
+    }
+    if (diseasePage > diseasePages) {
+      setDiseasePage(diseasePages);
+    }
+  }, [allergies, diseases, allergyPage, diseasePage]);
+
+  useEffect(() => {
+    setAllergyPage(1);
+    setDiseasePage(1);
+  }, [activeTab]);
+
   const openAddDialog = () => {
     setDialogMode("add");
     setFormName("");
@@ -105,7 +122,6 @@ export default function HealthDataManagement() {
     setShowDialog(true);
   };
 
-  // -------- Actions --------
   const handleSubmit = async () => {
     setErrMessage("");
     try {
@@ -164,7 +180,6 @@ export default function HealthDataManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Health Data Management</h2>
@@ -178,7 +193,6 @@ export default function HealthDataManagement() {
         </Button>
       </div>
 
-      {/* Messages */}
       {!!errMessage && (
         <Alert className="bg-red-50 border-red-200">
           <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -192,7 +206,6 @@ export default function HealthDataManagement() {
         </Alert>
       )}
 
-      {/* Pills (segmented) Tabs */}
       <div className="flex items-center justify-between">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full">
           <TabsList
@@ -237,6 +250,8 @@ export default function HealthDataManagement() {
               <DataTable
                 data={allergies}
                 loading={loading}
+                currentPage={allergyPage}
+                onPageChange={setAllergyPage}
                 onEdit={openEditDialog}
                 onDelete={openDeleteDialog}
               />
@@ -248,6 +263,8 @@ export default function HealthDataManagement() {
               <DataTable
                 data={diseases}
                 loading={loading}
+                currentPage={diseasePage}
+                onPageChange={setDiseasePage}
                 onEdit={openEditDialog}
                 onDelete={openDeleteDialog}
               />
@@ -256,7 +273,6 @@ export default function HealthDataManagement() {
         </Tabs>
       </div>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={showDialog && dialogMode !== "delete"} onOpenChange={setShowDialog}>
         <DialogContent
           className="
@@ -317,7 +333,6 @@ export default function HealthDataManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={showDialog && dialogMode === "delete"} onOpenChange={setShowDialog}>
 
         <DialogContent
@@ -367,7 +382,6 @@ export default function HealthDataManagement() {
     </div>
   );
 }
-// Data Card Component
 function DataCard({ children }) {
   return (
     <div
@@ -382,8 +396,13 @@ function DataCard({ children }) {
   );
 }
 
-// Data Table Component
-function DataTable({ data, loading, onEdit, onDelete }) {
+function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete }) {
+  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return data.slice(start, start + PAGE_SIZE);
+  }, [currentPage, data]);
+
   return (
     <div className="overflow-hidden">
       <div className="overflow-x-auto">
@@ -427,7 +446,7 @@ function DataTable({ data, loading, onEdit, onDelete }) {
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((item, idx) => (
+              paginatedData.map((item, idx) => (
                 <TableRow
                   key={item.id}
                   className={`
@@ -464,6 +483,38 @@ function DataTable({ data, loading, onEdit, onDelete }) {
           </TableBody>
         </Table>
       </div>
+      {!loading && data.length > 0 && (
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+          <p className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * PAGE_SIZE + 1}
+            {" - "}
+            {Math.min(currentPage * PAGE_SIZE, data.length)}
+            {" of "}
+            {data.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onPageChange((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onPageChange((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

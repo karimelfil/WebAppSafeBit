@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { logout } from "../services/auth";
-import { Button } from "../components/ui/button"; // adjust path if needed
+import { Button } from "../components/ui/button";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout(); // clears localStorage
-    navigate("/", { replace: true }); // redirect to login
+  const handleLogout = async () => {
+    await logout();
+    navigate("/", { replace: true });
   };
 
   return (

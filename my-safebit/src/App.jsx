@@ -28,7 +28,6 @@ export default function App() {
     const token = localStorage.getItem("sb_token");
     const role = (localStorage.getItem("sb_role") || "").toLowerCase();
 
-    // ONLY redirect automatically if user opens "/"
     if (window.location.pathname === "/") {
       if (token && role) {
         if (role === "admin") navigate("/admin", { replace: true });
@@ -43,7 +42,6 @@ export default function App() {
 
   return (
    <Routes>
-  {/* LOGIN */}
   <Route
     path="/"
     element={
@@ -55,7 +53,6 @@ export default function App() {
     }
   />
 
-  {/* REGISTER */}
   <Route
     path="/register"
     element={
@@ -65,16 +62,13 @@ export default function App() {
     }
   />
 
-  {/* FORGOT PASSWORD */}
   <Route
     path="/forgot-password"
     element={<ForgotPasswordPage onBack={() => navigate("/")} />}
   />
 
-  {/* RESET PASSWORD */}
   <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-  {/* ADMIN */}
   <Route
     path="/admin"
     element={
@@ -84,7 +78,6 @@ export default function App() {
     }
   />
 
-  {/* USER */}
   <Route
     path="/dashboard"
     element={
@@ -99,3 +92,4 @@ export default function App() {
 
   );
 }
+

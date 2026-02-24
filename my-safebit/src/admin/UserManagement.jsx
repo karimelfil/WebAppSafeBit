@@ -1,4 +1,3 @@
-//this file implements the user management admin page
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -30,7 +29,6 @@ import {
   reactivateUser,
 } from "../services/adminUserService";
 
-/* ======= Styles / Helpers ======= */
 const statusClasses = (status) =>
   status === "active"
     ? "bg-green-100 text-green-800 border border-green-200"
@@ -41,7 +39,6 @@ const dialogPanel =
   "bg-white text-gray-900 border border-gray-200 shadow-xl rounded-xl " +
   "sm:max-w-2xl w-full";
 
-// Dialog text helper
 const dialogLabel = "text-xs font-medium text-gray-600";
 const dialogValue = "text-sm text-gray-800 mt-1";
 
@@ -51,15 +48,17 @@ const dialogSectionTitle = "text-sm font-medium text-gray-900";
 
 
 export function UserManagement() {
-  // ---------- State ----------
-  const [users, setUsers] = useState([]); // normalized list
+  const PAGE_SIZE = 10;
+
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [selectedUser, setSelectedUser] = useState(null); // normalized detail
-  const [viewMode, setViewMode] = useState(null); // 'view' | 'edit' | null
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [viewMode, setViewMode] = useState(null);
 
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
 
@@ -69,7 +68,6 @@ export function UserManagement() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  // ---------- Load list ----------
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -97,7 +95,6 @@ export function UserManagement() {
     };
   }, []);
 
-  // ---------- Derived stats / filter ----------
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === "active").length;
   const suspendedUsers = users.filter((u) => u.status === "suspended").length;
@@ -113,14 +110,29 @@ export function UserManagement() {
     );
   }, [searchTerm, users]);
 
-  // ---------- Toast helper ----------
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredUsers.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const toast = (msg) => {
     setSuccessMessage(msg);
     setShowSuccessMessage(true);
     setTimeout(() => setShowSuccessMessage(false), 3000);
   };
 
-  // ---------- Actions ----------
   const handleViewUser = async (rowUser) => {
     setActionError(null);
     try {
@@ -155,7 +167,7 @@ export function UserManagement() {
 
   const handleSuspendUser = (rowUser) => {
     setSelectedUser({
-      ...rowUser, // list row has id, email, displayName, status
+      ...rowUser,
     });
     setShowSuspendDialog(true);
   };
@@ -171,7 +183,6 @@ export function UserManagement() {
         await reactivateUser(selectedUser.id);
       }
 
-      // Update list entry
       setUsers((prev) =>
         prev.map((u) =>
           u.id === selectedUser.id
@@ -211,7 +222,6 @@ export function UserManagement() {
         phone: selectedUser.phone,
       });
 
-      // Update list row display (email & name)
       setUsers((prev) =>
         prev.map((u) =>
           u.id === updated.id
@@ -251,7 +261,6 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
@@ -268,7 +277,6 @@ export function UserManagement() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
@@ -307,7 +315,6 @@ export function UserManagement() {
         </div>
       </div>
 
-      {/* Errors / Success */}
       {listError && (
         <Alert className="bg-red-50 border-red-200">
           <AlertDescription className="text-red-700">{listError}</AlertDescription>
@@ -327,7 +334,6 @@ export function UserManagement() {
         </Alert>
       )}
 
-      {/* Users Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -355,7 +361,7 @@ export function UserManagement() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredUsers.map((user) => (
+                paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>{user.id}</TableCell>
                     <TableCell>
@@ -365,7 +371,6 @@ export function UserManagement() {
                     </TableCell>
                     <TableCell>{user.email || "—"}</TableCell>
                     <TableCell>
-                      {/* vivid green/red pills */}
                       <Badge
                         className={`px-2.5 py-0.5 rounded-full text-xs capitalize ${statusClasses(
                           user.status
@@ -409,9 +414,40 @@ export function UserManagement() {
             </TableBody>
           </Table>
         </div>
+        {!loading && filteredUsers.length > 0 && (
+          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+            <p className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}
+              {" - "}
+              {Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
+              {" of "}
+              {filteredUsers.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* View User Dialog */}
       <Dialog open={viewMode === "view"} onOpenChange={() => setViewMode(null)}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
@@ -489,7 +525,6 @@ export function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <Dialog open={viewMode === "edit"} onOpenChange={() => setViewMode(null)}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
@@ -584,7 +619,6 @@ export function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Suspend / Reactivate Confirmation Dialog */}
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
@@ -666,3 +700,4 @@ export function UserManagement() {
     </div>
   );
 }
+

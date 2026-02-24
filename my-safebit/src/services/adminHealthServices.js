@@ -31,7 +31,6 @@ export async function deleteAllergen(id) {
   await http.delete(`/admin/allergens/${id}`);
 }
 
-// Diseases
 export async function getAllDiseases() {
   const res = await http.get("/admin/diseases");
   return (res.data.diseases || []).map(normalizeHealthItem);
@@ -55,3 +54,4 @@ export async function updateDisease(id, payload) {
 export async function deleteDisease(id) {
   await http.delete(`/admin/diseases/${id}`);
 }
+
