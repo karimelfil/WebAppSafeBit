@@ -27,3 +27,8 @@ export async function logout() {
   }
 }
 
+export async function deactivateAccountApi() {
+  const res = await http.post("/auth/deactivate-account");
+  return res.data;
+}
+

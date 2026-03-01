@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage/LoginPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./admin/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";

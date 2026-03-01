@@ -20,8 +20,8 @@ import { getAllUsers } from '../services/adminUserService';
 import { getAllDishesAdmin } from '../services/adminDishesService';
 import { getFeedbackReports } from '../services/adminFeedbackService';
 
-import { UserManagement } from '../admin/UserManagement';
-import HealthDataManagement from '../admin/HealthDataManagement';
+import { UserManagement } from './UserManagement';
+import HealthDataManagement from './HealthDataManagement';
 import { DishesManagement } from './DishesManagement';
 import { ReportsGeneration } from './ReportsGeneration';
 import { HealthAnalytics } from './HealthAnalytics';

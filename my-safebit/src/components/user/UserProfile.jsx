@@ -1,410 +1,670 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Shield, User, Check, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Checkbox } from "../ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Badge } from "../ui/badge";
+import {
+  AlertTriangle,
+  Check,
+  Info,
+  Loader2,
+  ShieldCheck,
+  Trash2,
+  UserRoundPen,
+} from "lucide-react";
+import {
+  addUserAllergy,
+  addUserDisease,
+  getUserAllergiesCatalog,
+  getUserDiseasesCatalog,
+  getUserHealth,
+  getUserHealthSummary,
+  getUserProfile,
+  patchUserProfile,
+  putUserHealth,
+  removeUserAllergy,
+  removeUserDisease,
+} from "../../services/userProfile";
+import { deactivateAccountApi } from "../../services/auth";
 
-const allergiesList = [
-  'Peanuts', 'Tree Nuts', 'Milk', 'Eggs', 'Wheat', 'Soy', 
-  'Fish', 'Shellfish', 'Sesame', 'Mustard', 'Celery', 'Lupin'
-];
+const getErrorMessage = (e, fallback) =>
+  e?.response?.data?.message || e?.response?.data?.title || e?.message || fallback;
 
-const diseasesList = [
-  'Diabetes', 'Celiac Disease', 'Lactose Intolerance', 
-  'Irritable Bowel Syndrome (IBS)', 'Crohn\'s Disease',
-  'Hypertension', 'High Cholesterol', 'GERD'
-];
+const formatDate = (value) => {
+  if (!value) return "Not set";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+};
+
+const humanizeGender = (value) => {
+  const raw = String(value || "").toLowerCase();
+  if (raw === "male" || raw === "1") return "Male";
+  if (raw === "female" || raw === "2") return "Female";
+  if (!raw) return "Not set";
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+};
 
 export function UserProfile() {
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  
-  // Personal Information (View & Edit)
-  const [firstName, setFirstName] = useState('John');
-  const [lastName, setLastName] = useState('Doe');
-  const [email, setEmail] = useState('john.doe@email.com');
-  const [phone, setPhone] = useState('+1 555-0101');
-  const [dob, setDob] = useState('1990-05-15');
-  const [gender, setGender] = useState('male');
-  
-  // Health Information
-  const [selectedAllergies, setSelectedAllergies] = useState(['Peanuts', 'Shellfish']);
-  const [selectedDiseases, setSelectedDiseases] = useState([]);
-  const [isPregnant, setIsPregnant] = useState(false);
+  const userId = localStorage.getItem("sb_userId");
 
-  // Password
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
 
-  // Delete account confirmation
+  const [profile, setProfile] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
+    gender: "",
+  });
+
+  const [health, setHealth] = useState({
+    isPregnant: false,
+    allergies: [],
+    diseases: [],
+  });
+
+  const [summary, setSummary] = useState({});
+  const [allergyCatalog, setAllergyCatalog] = useState([]);
+  const [diseaseCatalog, setDiseaseCatalog] = useState([]);
+
+  const [notice, setNotice] = useState({ type: "", text: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPregnancy, setSavingPregnancy] = useState(false);
+  const [pendingAllergyIds, setPendingAllergyIds] = useState([]);
+  const [pendingDiseaseIds, setPendingDiseaseIds] = useState([]);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  const handleSavePersonalInfo = () => {
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+  const selectedAllergyIds = useMemo(
+    () => health.allergies.map((x) => Number(x.id)).filter(Number.isFinite),
+    [health.allergies]
+  );
+  const selectedDiseaseIds = useMemo(
+    () => health.diseases.map((x) => Number(x.id)).filter(Number.isFinite),
+    [health.diseases]
+  );
+
+  const selectedAllergyNames = useMemo(
+    () => health.allergies.map((x) => x.name).filter(Boolean),
+    [health.allergies]
+  );
+  const selectedDiseaseNames = useMemo(
+    () => health.diseases.map((x) => x.name).filter(Boolean),
+    [health.diseases]
+  );
+
+  const isFemale = String(profile.gender).toLowerCase() === "female";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAll() {
+      if (!userId) {
+        setNotice({ type: "error", text: "Missing user session. Please log in again." });
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setNotice({ type: "", text: "" });
+
+      try {
+        const [profileData, healthData, allergies, diseases, summaryData] = await Promise.all([
+          getUserProfile(userId),
+          getUserHealth(userId),
+          getUserAllergiesCatalog(),
+          getUserDiseasesCatalog(),
+          getUserHealthSummary(userId).catch(() => ({})),
+        ]);
+
+        if (cancelled) return;
+
+        setProfile(profileData);
+        setHealth(healthData);
+        setAllergyCatalog(allergies);
+        setDiseaseCatalog(diseases);
+        setSummary(summaryData || {});
+      } catch (e) {
+        if (!cancelled) {
+          setNotice({
+            type: "error",
+            text: getErrorMessage(e, "Failed to load profile information."),
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadAll();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (notice.type !== "success" || !notice.text) return;
+    const timer = setTimeout(() => setNotice({ type: "", text: "" }), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  const refreshSummary = async () => {
+    if (!userId) return;
+    try {
+      const summaryData = await getUserHealthSummary(userId);
+      setSummary(summaryData || {});
+    } catch {}
   };
 
-  const handleSaveHealthInfo = () => {
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+  const handleSaveProfile = async () => {
+    if (!userId) return;
+    setSavingProfile(true);
+    setNotice({ type: "", text: "" });
+    try {
+      const updated = await patchUserProfile(userId, profile);
+      setProfile(updated);
+      setNotice({ type: "success", text: "Personal information updated successfully." });
+    } catch (e) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(e, "Failed to update personal information."),
+      });
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  const handleChangePassword = () => {
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match!');
+  const handlePregnancyUpdate = async (checked) => {
+    if (!userId) return;
+    setSavingPregnancy(true);
+    setNotice({ type: "", text: "" });
+    try {
+      const updated = await putUserHealth(userId, {
+        isPregnant: Boolean(checked),
+        allergyIds: selectedAllergyIds,
+        diseaseIds: selectedDiseaseIds,
+      });
+      setHealth(updated);
+      await refreshSummary();
+      setNotice({ type: "success", text: "Pregnancy status updated." });
+    } catch (e) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(e, "Failed to update pregnancy status."),
+      });
+    } finally {
+      setSavingPregnancy(false);
+    }
+  };
+
+  const handleToggleAllergy = async (item) => {
+    if (!userId) return;
+    const id = Number(item.id);
+    if (!Number.isFinite(id)) return;
+
+    const alreadySelected = selectedAllergyIds.includes(id);
+    setPendingAllergyIds((prev) => [...new Set([...prev, id])]);
+    setNotice({ type: "", text: "" });
+
+    try {
+      if (alreadySelected) {
+        await removeUserAllergy(userId, id);
+        setHealth((prev) => ({ ...prev, allergies: prev.allergies.filter((a) => Number(a.id) !== id) }));
+        setNotice({ type: "success", text: `${item.name} removed from your allergies.` });
+      } else {
+        await addUserAllergy(userId, id);
+        setHealth((prev) => ({ ...prev, allergies: [...prev.allergies, { id, name: item.name }] }));
+        setNotice({ type: "success", text: `${item.name} added to your allergies.` });
+      }
+      await refreshSummary();
+    } catch (e) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(e, "Failed to update allergy."),
+      });
+    } finally {
+      setPendingAllergyIds((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  const handleToggleDisease = async (item) => {
+    if (!userId) return;
+    const id = Number(item.id);
+    if (!Number.isFinite(id)) return;
+
+    const alreadySelected = selectedDiseaseIds.includes(id);
+    setPendingDiseaseIds((prev) => [...new Set([...prev, id])]);
+    setNotice({ type: "", text: "" });
+
+    try {
+      if (alreadySelected) {
+        await removeUserDisease(userId, id);
+        setHealth((prev) => ({ ...prev, diseases: prev.diseases.filter((d) => Number(d.id) !== id) }));
+        setNotice({ type: "success", text: `${item.name} removed from your diseases.` });
+      } else {
+        await addUserDisease(userId, id);
+        setHealth((prev) => ({ ...prev, diseases: [...prev.diseases, { id, name: item.name }] }));
+        setNotice({ type: "success", text: `${item.name} added to your diseases.` });
+      }
+      await refreshSummary();
+    } catch (e) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(e, "Failed to update disease."),
+      });
+    } finally {
+      setPendingDiseaseIds((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      setNotice({ type: "error", text: "Please type DELETE to confirm account deletion." });
       return;
     }
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
-  };
 
-  const handleDeleteAccount = () => {
-    if (deleteConfirmText !== 'DELETE') {
-      alert('Please type DELETE to confirm account deletion');
-      return;
+    setDeletingAccount(true);
+    setNotice({ type: "", text: "" });
+
+    try {
+      await deactivateAccountApi();
+      localStorage.removeItem("sb_token");
+      localStorage.removeItem("sb_role");
+      localStorage.removeItem("sb_userId");
+      window.location.href = "/";
+    } catch (e) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(e, "Failed to deactivate account."),
+      });
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText("");
     }
-    // Handle account deletion here
-    alert('Account deletion requested. This action cannot be undone.');
-    setShowDeleteConfirm(false);
-    setDeleteConfirmText('');
   };
 
-  const toggleAllergy = (allergy) => {
-    setSelectedAllergies(prev =>
-      prev.includes(allergy)
-        ? prev.filter(a => a !== allergy)
-        : [...prev, allergy]
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="flex items-center gap-3 text-gray-700">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading your profile...</span>
+        </div>
+      </div>
     );
-  };
-
-  const toggleDisease = (disease) => {
-    setSelectedDiseases(prev =>
-      prev.includes(disease)
-        ? prev.filter(d => d !== disease)
-        : [...prev, disease]
-    );
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h2>My Profile</h2>
-        <p className="text-sm text-gray-600">Manage your personal information and health profile</p>
+        <h2 className="text-2xl font-semibold text-gray-900">My Profile</h2>
+        <p className="mt-1 text-sm text-gray-700">
+          Manage your personal profile and health data.
+        </p>
       </div>
 
-      {/* Success Message */}
-      {showSuccessMessage && (
-        <Alert className="bg-green-50 border-green-200">
-          <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Your profile has been updated successfully!
+      {notice.text ? (
+        <Alert
+          role="status"
+          className={
+            notice.type === "error"
+              ? "flex items-center gap-2 border-red-200 bg-red-50"
+              : "flex items-center gap-2 border-green-200 bg-green-50"
+          }
+        >
+          {notice.type === "error" ? (
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          ) : (
+            <Check className="h-4 w-4 text-green-600" />
+          )}
+          <AlertDescription className={notice.type === "error" ? "m-0 text-red-800" : "m-0 text-green-800"}>
+            {notice.text}
           </AlertDescription>
         </Alert>
-      )}
+      ) : null}
 
-      {/* Tabs */}
-      <Tabs defaultValue="view">
-        <TabsList className="grid w-full md:w-auto grid-cols-3">
-          <TabsTrigger value="view">
-            <User className="h-4 w-4 mr-2" />
-            Personal Information
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl border border-gray-200 bg-gray-100 p-1.5 md:grid-cols-4">
+          <TabsTrigger
+            value="overview"
+            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+          >
+            <Info className="mr-2 h-4 w-4" />
+            General Info
           </TabsTrigger>
-          <TabsTrigger value="manage">
-            <Shield className="h-4 w-4 mr-2" />
-            Account Management
+          <TabsTrigger
+            value="personal"
+            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+          >
+            <UserRoundPen className="mr-2 h-4 w-4" />
+            Personal
           </TabsTrigger>
-          <TabsTrigger value="delete">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Account
+          <TabsTrigger
+            value="health"
+            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+          >
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            Health Updates
+          </TabsTrigger>
+          <TabsTrigger
+            value="delete"
+            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
           </TabsTrigger>
         </TabsList>
 
-        {/* View-Only Personal Information Tab */}
-        <TabsContent value="view" className="space-y-6">
-          <Card>
+        <TabsContent value="overview" className="space-y-6">
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Your account information (read-only)
-              </CardDescription>
+              <CardTitle className="text-gray-900">Profile Informations</CardTitle>
+              <CardDescription>Latest account and health information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">First Name</Label>
-                  <div className="text-base font-medium">{firstName}</div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-xs uppercase tracking-wide text-gray-500">Full Name</Label>
+                  <p className="mt-1 text-sm font-medium text-gray-900">
+                    {`${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Not set"}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Last Name</Label>
-                  <div className="text-base font-medium">{lastName}</div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wide text-gray-500">Email</Label>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{profile.email || "Not set"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wide text-gray-500">Date of Birth</Label>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{formatDate(profile.dateOfBirth)}</p>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wide text-gray-500">Gender</Label>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{humanizeGender(profile.gender)}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-500">Email Address</Label>
-                <div className="text-base font-medium">{email}</div>
+                <Label className="text-sm font-semibold text-gray-800">Selected Allergies</Label>
+                {selectedAllergyNames.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAllergyNames.map((name) => (
+                      <Badge
+                        key={`allergy-current-${name}`}
+                        className="border border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100"
+                      >
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No allergies selected.</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-500">Phone Number</Label>
-                <div className="text-base font-medium">{phone}</div>
+                <Label className="text-sm font-semibold text-gray-800">Selected Diseases</Label>
+                {selectedDiseaseNames.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDiseaseNames.map((name) => (
+                      <Badge
+                        key={`disease-current-${name}`}
+                        className="border border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-100"
+                      >
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No diseases selected.</p>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Date of Birth</Label>
-                  <div className="text-base font-medium">{formatDate(dob)}</div>
+              {isFemale ? (
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5">
+                  <Label className="text-xs uppercase tracking-wide text-indigo-700">Pregnancy Status</Label>
+                  <p className="mt-1 text-sm font-medium text-indigo-900">
+                    {health.isPregnant ? "Pregnant" : "Not pregnant"}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Gender</Label>
-                  <div className="text-base font-medium capitalize">{gender}</div>
-                </div>
-              </div>
+              ) : null}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Account Management Tab */}
-        <TabsContent value="manage" className="space-y-6">
-          {/* Update Personal Information */}
-          <Card>
+        <TabsContent value="personal">
+          <Card className="border-gray-200">
             <CardHeader>
               <CardTitle>Update Personal Information</CardTitle>
-              <CardDescription>
-                Update your basic account information
-              </CardDescription>
+              <CardDescription>Keep your account details up to date</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="editFirstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    id="firstName"
+                    value={profile.firstName}
+                    onChange={(e) => setProfile((p) => ({ ...p, firstName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    id="editLastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    id="lastName"
+                    value={profile.lastName}
+                    onChange={(e) => setProfile((p) => ({ ...p, lastName: e.target.value }))}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editEmail">Email Address</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="editEmail"
+                  id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={profile.email}
+                  readOnly
+                  disabled
+                  className="cursor-not-allowed bg-slate-100 text-slate-500"
                 />
+                <p className="text-xs text-slate-500">Email cannot be changed from this screen.</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editPhone">Phone Number</Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
-                  id="editPhone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  id="phone"
+                  value={profile.phone}
+                  onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="editDob">Date of Birth</Label>
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Input
-                    id="editDob"
+                    id="dateOfBirth"
                     type="date"
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
+                    value={profile.dateOfBirth || ""}
+                    onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="editGender">Gender</Label>
-                  <Select value={gender} onValueChange={setGender}>
-                    <SelectTrigger id="editGender">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="gender">Gender</Label>
+                  <Input id="gender" value={humanizeGender(profile.gender)} readOnly disabled className="cursor-not-allowed bg-slate-100 text-slate-500" />
+                  <p className="text-xs text-slate-500">Gender cannot be changed from this screen.</p>
                 </div>
               </div>
 
-              <Button onClick={handleSavePersonalInfo} className="w-full bg-green-600 hover:bg-green-700">
-                Save Personal Information
+              <Button
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {savingProfile ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Personal Information"
+                )}
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Update Health Profile */}
-          <Card>
+        <TabsContent value="health" className="space-y-6">
+          <Card className="border-slate-200 bg-white">
             <CardHeader>
               <CardTitle>Update Health Profile</CardTitle>
               <CardDescription>
-                Manage your health information and dietary restrictions
+                Each allergy and disease is updated independently as soon as you click it.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert className="bg-blue-50 border-blue-200">
-                <Shield className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-800">
-                  Your health information is confidential and used only to provide you with safe meal recommendations.
+              <Alert className="flex items-center gap-2 border-slate-200 bg-slate-50">
+                <ShieldCheck className="h-4 w-4 text-slate-700" />
+                <AlertDescription className="m-0 text-slate-700">
+                  Your health data is confidential and used only for safer food recommendations.
                 </AlertDescription>
               </Alert>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Allergies</h3>
-                <p className="text-sm text-gray-600 mb-4">Select all allergies that apply to you</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {allergiesList.map(allergy => (
-                    <div key={allergy} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`allergy-${allergy}`}
-                        checked={selectedAllergies.includes(allergy)}
-                        onCheckedChange={() => toggleAllergy(allergy)}
-                      />
-                      <label htmlFor={`allergy-${allergy}`} className="text-sm cursor-pointer">
-                        {allergy}
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900">Allergies</h3>
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-3">
+                  {allergyCatalog.map((item) => {
+                    const id = Number(item.id);
+                    const checked = selectedAllergyIds.includes(id);
+                    const busy = pendingAllergyIds.includes(id);
+                    return (
+                      <label
+                        key={`allergy-${id}`}
+                        className={`flex items-center gap-2 rounded-md border px-3 py-2 transition ${
+                          checked ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"
+                        } ${busy ? "opacity-70" : ""}`}
+                      >
+                        <Checkbox checked={checked} onCheckedChange={() => handleToggleAllergy(item)} disabled={busy} />
+                        <span className="text-sm text-gray-800">{item.name}</span>
+                        {busy ? <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin text-gray-500" /> : null}
                       </label>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  {allergyCatalog.length === 0 ? (
+                    <p className="text-sm text-gray-500">No allergies found.</p>
+                  ) : null}
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Chronic Food-Related Diseases</h3>
-                <p className="text-sm text-gray-600 mb-4">Select any chronic conditions you have</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {diseasesList.map(disease => (
-                    <div key={disease} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`disease-${disease}`}
-                        checked={selectedDiseases.includes(disease)}
-                        onCheckedChange={() => toggleDisease(disease)}
-                      />
-                      <label htmlFor={`disease-${disease}`} className="text-sm cursor-pointer">
-                        {disease}
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900">Chronic Diseases</h3>
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2">
+                  {diseaseCatalog.map((item) => {
+                    const id = Number(item.id);
+                    const checked = selectedDiseaseIds.includes(id);
+                    const busy = pendingDiseaseIds.includes(id);
+                    return (
+                      <label
+                        key={`disease-${id}`}
+                        className={`flex items-center gap-2 rounded-md border px-3 py-2 transition ${
+                          checked ? "border-sky-300 bg-sky-50" : "border-gray-200 bg-white"
+                        } ${busy ? "opacity-70" : ""}`}
+                      >
+                        <Checkbox checked={checked} onCheckedChange={() => handleToggleDisease(item)} disabled={busy} />
+                        <span className="text-sm text-gray-800">{item.name}</span>
+                        {busy ? <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin text-gray-500" /> : null}
                       </label>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  {diseaseCatalog.length === 0 ? (
+                    <p className="text-sm text-gray-500">No diseases found.</p>
+                  ) : null}
                 </div>
               </div>
 
-              {gender === 'female' && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Pregnancy Status</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    This helps us provide appropriate dietary recommendations
-                  </p>
-                  <div className="flex items-center space-x-2">
+              {isFemale ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-base font-semibold text-slate-900">Pregnancy Status</h3>
+                  <div className="mt-4 flex items-center gap-3">
                     <Checkbox
-                      id="pregnancy"
-                      checked={isPregnant}
-                      onCheckedChange={(checked) => setIsPregnant(checked)}
+                      id="isPregnant"
+                      checked={health.isPregnant}
+                      onCheckedChange={(checked) => handlePregnancyUpdate(Boolean(checked))}
+                      disabled={savingPregnancy}
+                      className="h-5 w-5 border-slate-400 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:text-white"
                     />
-                    <label htmlFor="pregnancy" className="text-sm cursor-pointer">
+                    <Label htmlFor="isPregnant" className="cursor-pointer text-sm text-slate-900">
                       I am currently pregnant
-                    </label>
+                    </Label>
+                    {savingPregnancy ? <Loader2 className="h-4 w-4 animate-spin text-slate-700" /> : null}
                   </div>
                 </div>
-              )}
-
-              <Button onClick={handleSaveHealthInfo} className="w-full bg-green-600 hover:bg-green-700">
-                Save Health Profile
-              </Button>
+              ) : null}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Delete Account Tab */}
-        <TabsContent value="delete" className="space-y-6">
-          <Card>
+        <TabsContent value="delete">
+          <Card className="border-red-200">
             <CardHeader>
-              <CardTitle className="text-red-600">Delete Account</CardTitle>
-              <CardDescription>
-                Permanently delete your account and all associated data
-              </CardDescription>
+              <CardTitle className="text-red-700">Delete Account</CardTitle>
+              <CardDescription>Permanently remove your account and all related data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert className="bg-red-50 border-red-200">
-                <Trash2 className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
-                  <strong>Warning:</strong> This action cannot be undone. All your data, including personal information, health profile, and meal history will be permanently deleted.
+              <Alert className="flex items-center gap-2 border-red-200 bg-red-50">
+                <Trash2 className="h-4 w-4 text-red-700" />
+                <AlertDescription className="m-0 text-red-900">
+                  This action is irreversible. All profile and health data will be lost permanently.
                 </AlertDescription>
               </Alert>
 
               {!showDeleteConfirm ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    If you're sure you want to delete your account, click the button below to proceed with the confirmation.
-                  </p>
-                  <Button 
-                    variant="destructive" 
-                    className="w-full"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Proceed to Delete Account
-                  </Button>
-                </div>
+                <Button
+                  className="w-full bg-red-600 text-white hover:bg-red-700"
+                  onClick={() => {
+                    setShowDeleteConfirm(true);
+                    setDeleteConfirmText("");
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Proceed to Delete Account
+                </Button>
               ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    To confirm account deletion, please type <strong>DELETE</strong> in the field below:
-                  </p>
-                  <div className="space-y-2">
-                    <Label htmlFor="deleteConfirm">Type DELETE to confirm</Label>
-                    <Input
-                      id="deleteConfirm"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="DELETE"
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <Label htmlFor="deleteConfirm">Type DELETE to confirm</Label>
+                  <Input
+                    id="deleteConfirm"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                  />
                   <div className="flex gap-3">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="flex-1"
                       onClick={() => {
                         setShowDeleteConfirm(false);
-                        setDeleteConfirmText('');
+                        setDeleteConfirmText("");
                       }}
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      variant="destructive" 
-                      className="flex-1"
+                    <Button
+                      className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                      disabled={deleteConfirmText !== "DELETE" || deletingAccount}
                       onClick={handleDeleteAccount}
-                      disabled={deleteConfirmText !== 'DELETE'}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Account Permanently
+                      {deletingAccount ? "Deleting..." : "Delete Permanently"}
                     </Button>
                   </div>
                 </div>

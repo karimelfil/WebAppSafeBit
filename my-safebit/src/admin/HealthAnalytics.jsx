@@ -79,7 +79,7 @@ export function HealthAnalytics() {
       </div>
 
       <Alert className="bg-blue-50 border-blue-200">
-        <AlertDescription className="text-blue-800 text-sm">
+        <AlertDescription className="m-0 text-blue-800 text-sm">
           <strong>Privacy Protected:</strong> All data shown is anonymized and aggregated.
         </AlertDescription>
       </Alert>
@@ -96,9 +96,9 @@ export function HealthAnalytics() {
       )}
 
       {!!error && (
-        <Alert className="bg-red-50 border-red-200">
+        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
           <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800 text-sm">{error}</AlertDescription>
+          <AlertDescription className="m-0 text-red-800 text-sm">{error}</AlertDescription>
         </Alert>
       )}
 

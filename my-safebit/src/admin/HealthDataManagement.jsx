@@ -194,15 +194,15 @@ export default function HealthDataManagement() {
       </div>
 
       {!!errMessage && (
-        <Alert className="bg-red-50 border-red-200">
+        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
           <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">{errMessage}</AlertDescription>
+          <AlertDescription className="m-0 text-red-800">{errMessage}</AlertDescription>
         </Alert>
       )}
       {showSuccessMessage && (
-        <Alert className="bg-green-50 border-green-200">
+        <Alert className="flex items-center gap-2 bg-green-50 border-green-200">
           <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+          <AlertDescription className="m-0 text-green-800">{successMessage}</AlertDescription>
         </Alert>
       )}
 
