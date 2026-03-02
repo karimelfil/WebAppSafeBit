@@ -1,142 +1,140 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../services/auth";
 import { Button } from "../components/ui/button";
-import { UserHome } from "../components/user/UserHome";
+import { logout } from "../services/auth";
+import { User, Upload, History, LogOut, Menu, X, Home } from "lucide-react";
+import { UserProfile } from "../components/user/UserProfile";
 import { MenuUpload } from "../components/user/MenuUpload";
 import { ScanHistory } from "../components/user/ScanHistory";
-import { UserProfile } from "../components/user/UserProfile";
-import { Home, Upload, History, User, LogOut, Menu, X } from "lucide-react";
+import { UserHome } from "../components/user/UserHome";
+import logoImage from "../assets/logos/safebite.png";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [currentSection, setCurrentSection] = useState("home");
+  const [activeSection, setActiveSection] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const menuItems = [
+    { id: "home", label: "Home", icon: Home },
+    { id: "upload", label: "Scan Menu", icon: Upload },
+    { id: "history", label: "Scan History", icon: History },
+    { id: "profile", label: "My Profile", icon: User },
+  ];
 
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
   };
 
-  const handleNavigate = (section) => {
-    setCurrentSection(section);
-    setSidebarOpen(false);
-  };
-
   const renderContent = () => {
-    switch (currentSection) {
-      case "home":
-        return <UserHome onNavigate={handleNavigate} />;
+    switch (activeSection) {
+      case "profile":
+        return <UserProfile />;
       case "upload":
         return <MenuUpload />;
       case "history":
         return <ScanHistory />;
-      case "profile":
-        return <UserProfile />;
       default:
-        return <UserHome onNavigate={handleNavigate} />;
+        return <UserHome onNavigate={setActiveSection} />;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 lg:h-screen lg:overflow-hidden">
-      {/* Mobile Top Bar */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
-        <h2 className="text-lg font-bold text-emerald-600">SafeBite</h2>
-        <button
-          onClick={() => setSidebarOpen((prev) => !prev)}
-          className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
-          aria-label="Toggle navigation"
-        >
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
+  const activeLabel = menuItems.find((item) => item.id === activeSection)?.label || "Dashboard";
 
-      {/* Mobile Overlay */}
+  return (
+    <div className="min-h-screen bg-[#f3f5f7] md:h-screen md:overflow-hidden">
+      {/* Mobile top bar */}
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-2 md:hidden">
+        <Button variant="ghost" size="sm" onClick={() => setSidebarOpen((v) => !v)}>
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+        <h2 className="text-base font-semibold text-[#1f2937]">SafeBite</h2>
+      </header>
+
       {sidebarOpen && (
         <button
-          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/40 md:hidden"
+          aria-label="Close sidebar"
           onClick={() => setSidebarOpen(false)}
-          aria-label="Close navigation"
         />
       )}
 
-      {/* Sidebar Navigation */}
-      <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 shadow-sm flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-emerald-600">SafeBite</h2>
-        </div>
+      <div className="flex md:h-screen">
+        <aside
+          className={[
+            "fixed md:static inset-y-0 left-0 z-30",
+            "w-64 bg-white border-r border-gray-200",
+            "transform transition-transform duration-200 md:translate-x-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          ].join(" ")}
+        >
+          <div className="flex h-full flex-col">
+            <div className="p-5 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <img src={logoImage} alt="SafeBite Logo" className="h-9 w-9 object-contain" />
+                <div>
+                  <h1 className="text-sm font-semibold text-[#16a36d]">SafeBite</h1>
+                  <p className="text-xs text-gray-500">User Dashboard</p>
+                </div>
+              </div>
+            </div>
 
-        <nav className="p-4 space-y-2 flex-1">
-          <button
-            onClick={() => handleNavigate("home")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              currentSection === "home"
-                ? "bg-emerald-100 text-emerald-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Home className="h-5 w-5" />
-            <span className="font-medium">Home</span>
-          </button>
+            <nav className="flex-1 overflow-y-auto p-3">
+              <div className="space-y-1">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
 
-          <button
-            onClick={() => handleNavigate("upload")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              currentSection === "upload"
-                ? "bg-emerald-100 text-emerald-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Upload className="h-5 w-5" />
-            <span className="font-medium">Scan Menu</span>
-          </button>
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={[
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
+                        isActive
+                          ? "bg-[#e7f7ef] text-[#11915f]"
+                          : "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
 
-          <button
-            onClick={() => handleNavigate("history")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              currentSection === "history"
-                ? "bg-emerald-100 text-emerald-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <History className="h-5 w-5" />
-            <span className="font-medium">Scan History</span>
-          </button>
+            <div className="p-3 border-t border-gray-200">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </aside>
 
-          <button
-            onClick={() => handleNavigate("profile")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              currentSection === "profile"
-                ? "bg-emerald-100 text-emerald-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <User className="h-5 w-5" />
-            <span className="font-medium">My Profile</span>
-          </button>
-        </nav>
+        <main className="flex-1 md:min-w-0 md:overflow-hidden">
+          <header className="hidden md:block bg-white border-b border-gray-200 px-5 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-[#111827]">{activeLabel}</h2>
+                <p className="text-xs text-gray-500">Welcome back!</p>
+              </div>
+              <div className="px-3 py-2 rounded-lg border border-green-200 bg-green-50">
+                <p className="text-xs text-green-800">User Account</p>
+              </div>
+            </div>
+          </header>
 
-        <div className="mt-auto p-4 border-t border-gray-200">
-          <Button
-            onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:ml-64 lg:h-screen lg:overflow-y-auto">
-        <div className="p-4 lg:p-8">
-          {renderContent()}
-        </div>
+          <div className="p-4 md:p-5 md:h-[calc(100vh-65px)] md:overflow-auto">{renderContent()}</div>
+        </main>
       </div>
     </div>
   );
