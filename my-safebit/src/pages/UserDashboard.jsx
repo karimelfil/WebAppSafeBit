@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { logout } from "../services/auth";
@@ -9,10 +9,16 @@ import { ScanHistory } from "../components/user/ScanHistory";
 import { UserHome } from "../components/user/UserHome";
 import logoImage from "../assets/logos/safebite.png";
 
+const ALLOWED_SECTIONS = ["home", "upload", "history", "profile"];
+
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState(() => {
+    const saved = sessionStorage.getItem("sb_active_section");
+    return ALLOWED_SECTIONS.includes(saved) ? saved : "home";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const menuItems = [
     { id: "home", label: "Home", icon: Home },
@@ -21,10 +27,23 @@ export default function UserDashboard() {
     { id: "profile", label: "My Profile", icon: User },
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/", { replace: true });
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      sessionStorage.removeItem("sb_active_section");
+      navigate("/", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
+  useEffect(() => {
+    if (ALLOWED_SECTIONS.includes(activeSection)) {
+      sessionStorage.setItem("sb_active_section", activeSection);
+    }
+  }, [activeSection]);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -111,10 +130,11 @@ export default function UserDashboard() {
               <Button
                 variant="ghost"
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </Button>
             </div>
           </div>

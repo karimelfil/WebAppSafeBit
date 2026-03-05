@@ -15,15 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
 
-/**
- * FULL PAGE that matches the screenshot layout:
- * - Left sidebar with pill active item + logout pinned bottom
- * - Main area with top header row
- * - Hero banner + smaller hero button
- *
- * Usage:
- * <UserDashboardPage onNavigate={(page)=>setPage(page)} activePage={page} />
- */
+
 export default function UserDashboardPage({ onNavigate, activePage = "home" }) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -77,7 +69,7 @@ function UserSidebar({ active = "home", onNavigate }) {
         </div>
       </div>
 
-      {/* Nav */}
+
       <nav className="p-3 space-y-1">
         {nav.map((item) => {
           const Icon = item.icon;
@@ -102,7 +94,7 @@ function UserSidebar({ active = "home", onNavigate }) {
         })}
       </nav>
 
-      {/* Logout pinned bottom */}
+
       <div className="mt-auto p-3 border-t">
         <button
           onClick={() => onNavigate?.("logout")}
@@ -128,7 +120,7 @@ export function UserHome({ onNavigate }) {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
+
       <div className="relative bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl p-6 md:p-8 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -mr-32 -mt-32" />
@@ -146,7 +138,7 @@ export function UserHome({ onNavigate }) {
             meal recommendations.
           </p>
 
-          {/* HERO BUTTON FIX: smaller text + correct color */}
+
           <Button
             onClick={() => onNavigate?.("upload")}
             variant="ghost"
@@ -165,7 +157,7 @@ export function UserHome({ onNavigate }) {
         </div>
       </div>
 
-      {/* Active Allergies & Diseases Alert */}
+
       {(userAllergies.length > 0 || userDiseases.length > 0) && (
         <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm rounded-2xl">
           <Shield className="h-4 w-4 text-amber-600" />
@@ -192,7 +184,6 @@ export function UserHome({ onNavigate }) {
         </Alert>
       )}
 
-      {/* Quick Actions */}
       <Card className="border border-gray-200 shadow-sm rounded-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -270,7 +261,6 @@ export function UserHome({ onNavigate }) {
         </CardContent>
       </Card>
 
-      {/* Recent Scans */}
       <Card className="shadow-sm rounded-2xl border border-gray-200">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -328,7 +318,7 @@ export function UserHome({ onNavigate }) {
         </CardContent>
       </Card>
 
-      {/* Safety Tips */}
+
       <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
