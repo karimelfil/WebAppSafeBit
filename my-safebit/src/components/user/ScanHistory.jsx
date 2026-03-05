@@ -130,17 +130,17 @@ export function ScanHistory() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="bg-white p-4 rounded-lg">
           <p className="text-sm text-gray-600">Total Scans</p>
           <p className="text-gray-900 mt-1">{history.length}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="bg-white p-4 rounded-lg">
           <p className="text-sm text-gray-600">Safe Dishes Found</p>
           <p className="text-green-600 mt-1">
             {history.reduce((acc, scan) => acc + scan.dishes.filter(d => d.isSafe).length, 0)}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="bg-white p-4 rounded-lg">
           <p className="text-sm text-gray-600">Warnings Issued</p>
           <p className="text-red-600 mt-1">
             {history.reduce((acc, scan) => acc + scan.dishes.filter(d => !d.isSafe).length, 0)}
@@ -156,7 +156,7 @@ export function ScanHistory() {
           const hasWarnings = record.dishes.some(d => !d.isSafe);
 
           return (
-            <Card key={record.id}>
+            <Card key={record.id} className="border-0">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -208,10 +208,10 @@ export function ScanHistory() {
                     {record.dishes.map((dish, index) => (
                       <div
                         key={index}
-                        className={`p-3 rounded-lg border ${
+                        className={`p-3 rounded-lg ${
                           dish.isSafe
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-red-50 border-red-200'
+                            ? 'bg-green-50'
+                            : 'bg-red-50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -287,10 +287,10 @@ export function ScanHistory() {
                   {selectedScan.dishes.map((dish, index) => (
                     <div
                       key={index}
-                      className={`p-4 rounded-lg border-2 ${
+                      className={`p-4 rounded-lg ${
                         dish.isSafe
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-red-50 border-red-200'
+                          ? 'bg-green-50'
+                          : 'bg-red-50'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-3">
