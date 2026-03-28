@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -21,7 +21,7 @@ import {
 } from "../components/ui/dialog";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Plus, Edit, Trash2, Check, AlertTriangle } from "lucide-react";
-
+import { styles } from '../styles/admin/HealthDataManagement.styles.js';
 import {
   getAllAllergens,
   createAllergen,
@@ -179,73 +179,53 @@ export default function HealthDataManagement() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={styles.cls001}>
+      <div className={styles.cls002}>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Health Data Management</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className={styles.cls003}>Health Data Management</h2>
+          <p className={styles.cls004}>
             Manage allergies and chronic food-related diseases
           </p>
         </div>
-        <Button onClick={openAddDialog} className="bg-green-600 hover:bg-green-700 shadow-sm">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={openAddDialog} className={styles.cls005}>
+          <Plus className={styles.cls006} />
           Add {headerTitle}
         </Button>
       </div>
 
       {!!errMessage && (
-        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="m-0 text-red-800">{errMessage}</AlertDescription>
+        <Alert className={styles.cls007}>
+          <AlertTriangle className={styles.cls008} />
+          <AlertDescription className={styles.cls009}>{errMessage}</AlertDescription>
         </Alert>
       )}
       {showSuccessMessage && (
-        <Alert className="flex items-center gap-2 bg-green-50 border-green-200">
-          <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="m-0 text-green-800">{successMessage}</AlertDescription>
+        <Alert className={styles.cls010}>
+          <Check className={styles.cls011} />
+          <AlertDescription className={styles.cls012}>{successMessage}</AlertDescription>
         </Alert>
       )}
 
-      <div className="flex items-center justify-between">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full">
+      <div className={styles.cls013}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className={styles.cls014}>
           <TabsList
-            className="
-              w-full
-              bg-gray-100
-              rounded-full
-              p-1
-              flex
-              gap-1
-              shadow-inner
-            "
+            className={styles.cls015}
           >
             <TabsTrigger
               value="allergies"
-              className="
-                flex-1 rounded-full px-4 py-2 text-sm font-medium
-                data-[state=active]:bg-white data-[state=active]:text-gray-900
-                data-[state=active]:shadow
-                data-[state=inactive]:text-gray-700
-                transition
-              "
+              className={styles.cls016}
             >
               Allergens
             </TabsTrigger>
             <TabsTrigger
               value="diseases"
-              className="
-                flex-1 rounded-full px-4 py-2 text-sm font-medium
-                data-[state=active]:bg-white data-[state=active]:text-gray-900
-                data-[state=active]:shadow
-                data-[state=inactive]:text-gray-700
-                transition
-              "
+              className={styles.cls016}
             >
               Chronic Diseases
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="allergies" className="mt-4">
+          <TabsContent value="allergies" className={styles.cls017}>
             <DataCard>
               <DataTable
                 data={allergies}
@@ -258,7 +238,7 @@ export default function HealthDataManagement() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="diseases" className="mt-4">
+          <TabsContent value="diseases" className={styles.cls017}>
             <DataCard>
               <DataTable
                 data={diseases}
@@ -275,39 +255,32 @@ export default function HealthDataManagement() {
 
       <Dialog open={showDialog && dialogMode !== "delete"} onOpenChange={setShowDialog}>
         <DialogContent
-          className="
-            sm:max-w-lg
-            bg-white
-            shadow-2xl
-            border border-gray-200
-            rounded-xl
-            p-6
-          "
+          className={styles.cls018}
         >
           <DialogHeader>
-            <DialogTitle className="text-lg">
+            <DialogTitle className={styles.cls019}>
               {dialogMode === "add" ? "Add New" : "Edit"} {headerTitle}
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className={styles.cls020}>
               {dialogMode === "add"
                 ? `Add a new ${headerTitle.toLowerCase()} to the database.`
                 : `Update the ${headerTitle.toLowerCase()} information.`}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
+          <div className={styles.cls021}>
+            <div className={styles.cls022}>
               <Label htmlFor="name">Name *</Label>
               <Input
                 id="name"
                 autoFocus
-                className="focus-visible:ring-green-600"
+                className={styles.cls023}
                 placeholder={`Enter ${headerTitle.toLowerCase()} name`}
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
+            <div className={styles.cls022}>
               <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
@@ -318,14 +291,14 @@ export default function HealthDataManagement() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className={styles.cls024}>
             <Button variant="outline" onClick={() => setShowDialog(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!formName.trim()}
-              className="bg-green-600 hover:bg-green-700"
+              className={styles.cls025}
             >
               {dialogMode === "add" ? "Add" : "Save Changes"}
             </Button>
@@ -336,44 +309,37 @@ export default function HealthDataManagement() {
       <Dialog open={showDialog && dialogMode === "delete"} onOpenChange={setShowDialog}>
 
         <DialogContent
-          className="
-            sm:max-w-lg
-            bg-white
-            shadow-2xl
-            border border-gray-200
-            rounded-xl
-            p-6
-          "
+          className={styles.cls018}
         >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+            <DialogTitle className={styles.cls026}>
+              <AlertTriangle className={styles.cls027} />
               Delete {headerTitle}
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className={styles.cls020}>
               Are you sure you want to remove this {headerTitle.toLowerCase()}? This action
               cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           {selectedItem && (
-            <div className="py-2 space-y-2">
-              <p className="text-sm">
-                <strong className="text-gray-800">Name:</strong> {selectedItem.name}
+            <div className={styles.cls028}>
+              <p className={styles.cls029}>
+                <strong className={styles.cls030}>Name:</strong> {selectedItem.name}
               </p>
               {!!selectedItem.category && (
-                <p className="text-sm">
-                  <strong className="text-gray-800">Category:</strong> {selectedItem.category}
+                <p className={styles.cls029}>
+                  <strong className={styles.cls030}>Category:</strong> {selectedItem.category}
                 </p>
               )}
             </div>
           )}
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className={styles.cls024}>
             <Button variant="outline" onClick={() => setShowDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="bg-red-600 hover:bg-red-700">
+            <Button onClick={handleSubmit} className={styles.cls031}>
               Delete
             </Button>
           </DialogFooter>
@@ -385,11 +351,7 @@ export default function HealthDataManagement() {
 function DataCard({ children }) {
   return (
     <div
-      className="
-        bg-white border border-gray-200 rounded-xl
-        shadow-sm
-        overflow-hidden
-      "
+      className={styles.cls032}
     >
       {children}
     </div>
@@ -404,44 +366,44 @@ function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete 
   }, [currentPage, data]);
 
   return (
-    <div className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table className="min-w-full">
-          <TableHeader className="sticky top-0 z-10 bg-gray-50">
-            <TableRow className="border-b border-gray-200">
-              <TableHead className="text-gray-600">ID</TableHead>
-              <TableHead className="text-gray-600">Name</TableHead>
-              <TableHead className="text-gray-600">Category</TableHead>
-              <TableHead className="text-gray-600">Added Date</TableHead>
-              <TableHead className="text-right text-gray-600">Actions</TableHead>
+    <div className={styles.cls033}>
+      <div className={styles.cls034}>
+        <Table className={styles.cls035}>
+          <TableHeader className={styles.cls036}>
+            <TableRow className={styles.cls037}>
+              <TableHead className={styles.cls020}>ID</TableHead>
+              <TableHead className={styles.cls020}>Name</TableHead>
+              <TableHead className={styles.cls020}>Category</TableHead>
+              <TableHead className={styles.cls020}>Added Date</TableHead>
+              <TableHead className={styles.cls038}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <>
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={`s-${i}`} className="animate-pulse">
-                    <TableCell className="py-4">
-                      <div className="h-3 w-12 bg-gray-200 rounded" />
+                  <TableRow key={`s-${i}`} className={styles.cls039}>
+                    <TableCell className={styles.cls040}>
+                      <div className={styles.cls041} />
                     </TableCell>
-                    <TableCell className="py-4">
-                      <div className="h-3 w-28 bg-gray-200 rounded" />
+                    <TableCell className={styles.cls040}>
+                      <div className={styles.cls042} />
                     </TableCell>
-                    <TableCell className="py-4">
-                      <div className="h-3 w-20 bg-gray-200 rounded" />
+                    <TableCell className={styles.cls040}>
+                      <div className={styles.cls043} />
                     </TableCell>
-                    <TableCell className="py-4">
-                      <div className="h-3 w-24 bg-gray-200 rounded" />
+                    <TableCell className={styles.cls040}>
+                      <div className={styles.cls044} />
                     </TableCell>
-                    <TableCell className="py-4 text-right">
-                      <div className="h-3 w-16 bg-gray-200 rounded ml-auto" />
+                    <TableCell className={styles.cls045}>
+                      <div className={styles.cls046} />
                     </TableCell>
                   </TableRow>
                 ))}
               </>
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-gray-500">
+                <TableCell colSpan={5} className={styles.cls047}>
                   No data found.
                 </TableCell>
               </TableRow>
@@ -454,26 +416,26 @@ function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete 
                     hover:bg-green-50/50 transition-colors
                   `}
                 >
-                  <TableCell className="whitespace-nowrap">{item.id}</TableCell>
-                  <TableCell className="max-w-[320px] truncate">{item.name}</TableCell>
-                  <TableCell className="max-w-[240px] truncate">
+                  <TableCell className={styles.cls048}>{item.id}</TableCell>
+                  <TableCell className={styles.cls049}>{item.name}</TableCell>
+                  <TableCell className={styles.cls050}>
                     {item.category || "-"}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className={styles.cls048}>
                     {item.addedAt ? new Date(item.addedAt).toLocaleDateString() : "-"}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                  <TableCell className={styles.cls051}>
+                    <div className={styles.cls052}>
                       <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
-                        <Edit className="h-4 w-4" />
+                        <Edit className={styles.cls053} />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => onDelete(item)}
-                        className="text-red-600 hover:text-red-700"
+                        className={styles.cls054}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className={styles.cls053} />
                       </Button>
                     </div>
                   </TableCell>
@@ -484,15 +446,15 @@ function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete 
         </Table>
       </div>
       {!loading && data.length > 0 && (
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-          <p className="text-sm text-gray-600">
+        <div className={styles.cls055}>
+          <p className={styles.cls004}>
             Showing {(currentPage - 1) * PAGE_SIZE + 1}
             {" - "}
             {Math.min(currentPage * PAGE_SIZE, data.length)}
             {" of "}
             {data.length}
           </p>
-          <div className="flex items-center gap-2">
+          <div className={styles.cls056}>
             <Button
               size="sm"
               variant="outline"
@@ -501,7 +463,7 @@ function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete 
             >
               Previous
             </Button>
-            <span className="text-sm text-gray-700">
+            <span className={styles.cls057}>
               Page {currentPage} of {totalPages}
             </span>
             <Button
@@ -518,3 +480,5 @@ function DataTable({ data, loading, currentPage, onPageChange, onEdit, onDelete 
     </div>
   );
 }
+
+

@@ -45,6 +45,16 @@ const parseFilename = (contentDisposition) => {
   return null;
 };
 
+const getExportExtension = (format) => {
+  const normalizedFormat = String(format || "pdf").toLowerCase();
+
+  if (normalizedFormat === "excel") {
+    return "xlsx";
+  }
+
+  return normalizedFormat;
+};
+
 export async function exportReport(payload) {
   const res = await http.post(
     "/admin/export-report",
@@ -57,7 +67,7 @@ export async function exportReport(payload) {
   );
 
   const contentDisposition = res?.headers?.["content-disposition"];
-  const fallbackExt = String(payload.format || "pdf").toLowerCase();
+  const fallbackExt = getExportExtension(payload.format);
   const fallbackName = `analytics-report-${Date.now()}.${fallbackExt}`;
 
   return {

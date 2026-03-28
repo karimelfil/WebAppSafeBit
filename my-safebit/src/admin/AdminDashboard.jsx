@@ -14,7 +14,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-
+import { styles } from '../styles/admin/AdminDashboard.styles.js';
 import { logout as authLogout } from '../services/auth';
 import { getAllUsers } from '../services/adminUserService';
 import { getAllDishesAdmin } from '../services/adminDishesService';
@@ -77,10 +77,10 @@ export function AdminDashboard({ onLogout }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={styles.cls001}>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className={styles.cls002}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -93,29 +93,29 @@ export function AdminDashboard({ onLogout }) {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src={logoImage} alt="SafeBite Logo" className="h-10 w-10" />
+        <div className={styles.cls003}>
+          <div className={styles.cls004}>
+            <div className={styles.cls005}>
+              <div className={styles.cls006}>
+                <img src={logoImage} alt="SafeBite Logo" className={styles.cls007} />
                 <div>
-                  <h1 className="text-green-600 font-semibold leading-none">SafeBite</h1>
-                  <p className="text-xs text-gray-500">Admin Panel</p>
+                  <h1 className={styles.cls008}>SafeBite</h1>
+                  <p className={styles.cls009}>Admin Panel</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden"
+                className={styles.cls010}
                 onClick={() => setSidebarOpen(false)}
               >
-                <X className="h-5 w-5" />
+                <X className={styles.cls011} />
               </Button>
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-1">
+          <nav className={styles.cls012}>
+            <div className={styles.cls013}>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.id;
@@ -133,56 +133,56 @@ export function AdminDashboard({ onLogout }) {
                       ${isActive ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-100'}
                     `}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-sm">{item.label}</span>
+                    <Icon className={styles.cls011} />
+                    <span className={styles.cls014}>{item.label}</span>
                   </button>
                 );
               })}
             </div>
           </nav>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className={styles.cls015}>
             <Button
               variant="ghost"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className={styles.cls016}
             >
-              <LogOut className="h-5 w-5 mr-3" />
+              <LogOut className={styles.cls017} />
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden flex flex-col">
-        <header className="bg-white border-b border-gray-200 p-4 lg:p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <main className={styles.cls018}>
+        <header className={styles.cls019}>
+          <div className={styles.cls005}>
+            <div className={styles.cls020}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden"
+                className={styles.cls010}
                 onClick={() => setSidebarOpen(true)}
               >
-                <Menu className="h-6 w-6" />
+                <Menu className={styles.cls021} />
               </Button>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className={styles.cls022}>
                   {menuItems.find((item) => item.id === activeSection)?.label || 'Dashboard'}
                 </h2>
-                <p className="text-sm text-gray-500">Welcome back, Administrator</p>
+                <p className={styles.cls023}>Welcome back, Administrator</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center gap-3">
-              <div className="px-3 py-2 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-800">Admin Account</p>
+            <div className={styles.cls024}>
+              <div className={styles.cls025}>
+                <p className={styles.cls026}>Admin Account</p>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 lg:p-6">{renderContent()}</div>
+        <div className={styles.cls027}>{renderContent()}</div>
       </main>
     </div>
   );
@@ -275,79 +275,79 @@ function DashboardOverview({ onNavigate }) {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className={styles.cls028}>
       {loading && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200 text-gray-600">
-          <span className="inline-flex items-center gap-2 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" />
+        <div className={styles.cls029}>
+          <span className={styles.cls030}>
+            <Loader2 className={styles.cls031} />
             Loading overview data...
           </span>
         </div>
       )}
 
       {!!error && (
-        <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700">
-          <span className="inline-flex items-center gap-2 text-sm">
-            <AlertCircle className="h-4 w-4" />
+        <div className={styles.cls032}>
+          <span className={styles.cls030}>
+            <AlertCircle className={styles.cls033} />
             {error}
           </span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Total Users</p>
-          <p className="text-2xl font-semibold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">Registered accounts</p>
+      <div className={styles.cls034}>
+        <div className={styles.cls035}>
+          <p className={styles.cls036}>Total Users</p>
+          <p className={styles.cls037}>{stats.totalUsers.toLocaleString()}</p>
+          <p className={styles.cls038}>Registered accounts</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Active Users</p>
-          <p className="text-2xl font-semibold text-gray-900">{stats.activeUsers.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">Users with active status</p>
+        <div className={styles.cls035}>
+          <p className={styles.cls036}>Active Users</p>
+          <p className={styles.cls037}>{stats.activeUsers.toLocaleString()}</p>
+          <p className={styles.cls038}>Users with active status</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Total Dishes</p>
-          <p className="text-2xl font-semibold text-gray-900">{stats.totalDishes.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">Dishes in catalog</p>
+        <div className={styles.cls035}>
+          <p className={styles.cls036}>Total Dishes</p>
+          <p className={styles.cls037}>{stats.totalDishes.toLocaleString()}</p>
+          <p className={styles.cls038}>Dishes in catalog</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Pending Feedback</p>
-          <p className="text-2xl font-semibold text-gray-900">{stats.pendingFeedback.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">Awaiting review</p>
+        <div className={styles.cls035}>
+          <p className={styles.cls036}>Pending Feedback</p>
+          <p className={styles.cls037}>{stats.pendingFeedback.toLocaleString()}</p>
+          <p className={styles.cls038}>Awaiting review</p>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button className="bg-green-600 hover:bg-green-700" onClick={() => onNavigate('users')}>
-            <Users className="h-4 w-4 mr-2" />
+      <div className={styles.cls035}>
+        <h3 className={styles.cls039}>Quick Actions</h3>
+        <div className={styles.cls040}>
+          <Button className={styles.cls041} onClick={() => onNavigate('users')}>
+            <Users className={styles.cls042} />
             View All Users
           </Button>
           <Button variant="outline" onClick={() => onNavigate('reports')}>
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className={styles.cls042} />
             Generate Report
           </Button>
           <Button variant="outline" onClick={() => onNavigate('health-data')}>
-            <Database className="h-4 w-4 mr-2" />
+            <Database className={styles.cls042} />
             Add Health Data
           </Button>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-        <div className="space-y-3">
+      <div className={styles.cls035}>
+        <h3 className={styles.cls039}>Recent Activity</h3>
+        <div className={styles.cls043}>
           {activities.length === 0 ? (
-            <p className="text-sm text-gray-500">No recent activity available.</p>
+            <p className={styles.cls023}>No recent activity available.</p>
           ) : (
             activities.map((activity, index) => (
               <div
                 key={`${activity.action}-${index}`}
-                className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                className={styles.cls044}
               >
-                <p className="text-sm text-gray-700">{activity.action}</p>
-                <span className="text-xs text-gray-500">{activity.time}</span>
+                <p className={styles.cls045}>{activity.action}</p>
+                <span className={styles.cls009}>{activity.time}</span>
               </div>
             ))
           )}
@@ -358,3 +358,5 @@ function DashboardOverview({ onNavigate }) {
 }
 
 export default AdminDashboard;
+
+

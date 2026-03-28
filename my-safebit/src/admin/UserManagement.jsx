@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
+import { styles } from '../styles/admin/UserManagement.styles.js';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
@@ -260,84 +260,84 @@ export function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={styles.cls001}>
+      <div className={styles.cls002}>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
-          <p className="text-sm text-gray-600">View and manage all registered users</p>
+          <h2 className={styles.cls003}>User Management</h2>
+          <p className={styles.cls004}>View and manage all registered users</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className={styles.cls005}>
+          <Search className={styles.cls006} />
           <Input
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className={styles.cls007}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+      <div className={styles.cls008}>
+        <div className={styles.cls009}>
+          <div className={styles.cls010}>
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+              <p className={styles.cls011}>Total Users</p>
+              <p className={styles.cls012}>{totalUsers}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className={styles.cls013}>
+              <Users className={styles.cls014} />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className={styles.cls009}>
+          <div className={styles.cls010}>
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
+              <p className={styles.cls011}>Active Users</p>
+              <p className={styles.cls015}>{activeUsers}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <UserCheck className="h-6 w-6 text-green-600" />
+            <div className={styles.cls016}>
+              <UserCheck className={styles.cls017} />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className={styles.cls009}>
+          <div className={styles.cls010}>
             <div>
-              <p className="text-sm font-medium text-gray-600">Suspended Users</p>
-              <p className="text-2xl font-bold text-red-600">{suspendedUsers}</p>
+              <p className={styles.cls011}>Suspended Users</p>
+              <p className={styles.cls018}>{suspendedUsers}</p>
             </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <UserX className="h-6 w-6 text-red-600" />
+            <div className={styles.cls019}>
+              <UserX className={styles.cls020} />
             </div>
           </div>
         </div>
       </div>
 
       {listError && (
-        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="m-0 text-red-700">{listError}</AlertDescription>
+        <Alert className={styles.cls021}>
+          <AlertTriangle className={styles.cls022} />
+          <AlertDescription className={styles.cls023}>{listError}</AlertDescription>
         </Alert>
       )}
       {actionError && (
-        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="m-0 text-red-700">{actionError}</AlertDescription>
+        <Alert className={styles.cls021}>
+          <AlertTriangle className={styles.cls022} />
+          <AlertDescription className={styles.cls023}>{actionError}</AlertDescription>
         </Alert>
       )}
       {showSuccessMessage && (
-        <Alert className="flex items-center gap-2 bg-green-50 border-green-200">
-          <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="m-0 text-green-800">
+        <Alert className={styles.cls024}>
+          <Check className={styles.cls025} />
+          <AlertDescription className={styles.cls026}>
             {successMessage}
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className={styles.cls027}>
+        <div className={styles.cls028}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -346,20 +346,20 @@ export function UserManagement() {
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Registered</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className={styles.cls029}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6}>
-                    <div className="py-6 text-sm text-gray-500">Loading users…</div>
+                    <div className={styles.cls030}>Loading usersâ€¦</div>
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6}>
-                    <div className="py-6 text-sm text-gray-500">No users found.</div>
+                    <div className={styles.cls030}>No users found.</div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -369,9 +369,9 @@ export function UserManagement() {
                     <TableCell>
                       {user.displayName ||
                         [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-                        "—"}
+                        "â€”"}
                     </TableCell>
-                    <TableCell>{user.email || "—"}</TableCell>
+                    <TableCell>{user.email || "â€”"}</TableCell>
                     <TableCell>
                       <Badge
                         className={`px-2.5 py-0.5 rounded-full text-xs capitalize ${statusClasses(
@@ -384,15 +384,15 @@ export function UserManagement() {
                     <TableCell>
                       {user.registeredAt
                         ? new Date(user.registeredAt).toLocaleDateString()
-                        : "—"}
+                        : "â€”"}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className={styles.cls029}>
+                      <div className={styles.cls031}>
                         <Button size="sm" variant="ghost" onClick={() => handleViewUser(user)}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className={styles.cls032} />
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => handleEditUser(user)}>
-                          <Edit className="h-4 w-4" />
+                          <Edit className={styles.cls032} />
                         </Button>
                         <Button
                           size="sm"
@@ -403,9 +403,9 @@ export function UserManagement() {
                           }
                         >
                           {user.status === "suspended" ? (
-                            <Check className="h-4 w-4" />
+                            <Check className={styles.cls032} />
                           ) : (
-                            <Ban className="h-4 w-4" />
+                            <Ban className={styles.cls032} />
                           )}
                         </Button>
                       </div>
@@ -417,15 +417,15 @@ export function UserManagement() {
           </Table>
         </div>
         {!loading && filteredUsers.length > 0 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-            <p className="text-sm text-gray-600">
+          <div className={styles.cls033}>
+            <p className={styles.cls004}>
               Showing {(currentPage - 1) * PAGE_SIZE + 1}
               {" - "}
               {Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
               {" of "}
               {filteredUsers.length}
             </p>
-            <div className="flex items-center gap-2">
+            <div className={styles.cls034}>
               <Button
                 size="sm"
                 variant="outline"
@@ -434,7 +434,7 @@ export function UserManagement() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-700">
+              <span className={styles.cls035}>
                 Page {currentPage} of {totalPages}
               </span>
               <Button
@@ -453,21 +453,21 @@ export function UserManagement() {
       <Dialog open={viewMode === "view"} onOpenChange={() => setViewMode(null)}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
-            <DialogTitle className="text-lg">User Details</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
+            <DialogTitle className={styles.cls036}>User Details</DialogTitle>
+            <DialogDescription className={styles.cls004}>
               View personal information 
             </DialogDescription>
           </DialogHeader>
 
           {selectedUser && (
-            <div className="grid grid-cols-2 gap-4 py-2">
+            <div className={styles.cls037}>
               <div>
                 <div className={dialogLabel}>User ID</div>
                 <p className={dialogValue}>{selectedUser.id}</p>
               </div>
               <div>
                 <div className={dialogLabel}>Status</div>
-                <div className="mt-1">
+                <div className={styles.cls038}>
                   <Badge
                     className={`px-2.5 py-0.5 rounded-full text-xs capitalize ${statusClasses(
                       selectedUser.status
@@ -480,39 +480,39 @@ export function UserManagement() {
 
               <div>
                 <div className={dialogLabel}>First Name</div>
-                <p className={dialogValue}>{selectedUser.firstName || "—"}</p>
+                <p className={dialogValue}>{selectedUser.firstName || "â€”"}</p>
               </div>
               <div>
                 <div className={dialogLabel}>Last Name</div>
-                <p className={dialogValue}>{selectedUser.lastName || "—"}</p>
+                <p className={dialogValue}>{selectedUser.lastName || "â€”"}</p>
               </div>
 
               <div>
                 <div className={dialogLabel}>Email</div>
-                <p className={dialogValue}>{selectedUser.email || "—"}</p>
+                <p className={dialogValue}>{selectedUser.email || "â€”"}</p>
               </div>
               <div>
                 <div className={dialogLabel}>Phone</div>
-                <p className={dialogValue}>{selectedUser.phone || "—"}</p>
+                <p className={dialogValue}>{selectedUser.phone || "â€”"}</p>
               </div>
 
               <div>
                 <div className={dialogLabel}>Date of Birth</div>
                 <p className={dialogValue}>
-                  {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString() : "—"}
+                  {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString() : "â€”"}
                 </p>
               </div>
               <div>
                 <div className={dialogLabel}>Gender</div>
-                <p className={dialogValue}>{selectedUser.gender || "—"}</p>
+                <p className={dialogValue}>{selectedUser.gender || "â€”"}</p>
               </div>
 
-              <div className="col-span-2">
+              <div className={styles.cls039}>
                 <div className={dialogLabel}>Registered At</div>
                 <p className={dialogValue}>
                   {selectedUser.registeredAt
                     ? new Date(selectedUser.registeredAt).toLocaleString()
-                    : "—"}
+                    : "â€”"}
                 </p>
               </div>
 
@@ -530,52 +530,52 @@ export function UserManagement() {
       <Dialog open={viewMode === "edit"} onOpenChange={() => setViewMode(null)}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
-            <DialogTitle className="text-lg">Edit User Information</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
+            <DialogTitle className={styles.cls036}>Edit User Information</DialogTitle>
+            <DialogDescription className={styles.cls004}>
               Update user's personal details
             </DialogDescription>
           </DialogHeader>
 
           {selectedUser && (
-            <div className="grid grid-cols-2 gap-4 py-2">
-              <div className="space-y-2">
+            <div className={styles.cls037}>
+              <div className={styles.cls040}>
                 <div className={dialogLabel}>First Name</div>
                 <Input
                   value={selectedUser.firstName ?? ""}
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, firstName: e.target.value })
                   }
-                  className="h-10"
+                  className={styles.cls041}
                 />
               </div>
-              <div className="space-y-2">
+              <div className={styles.cls040}>
                 <div className={dialogLabel}>Last Name</div>
                 <Input
                   value={selectedUser.lastName ?? ""}
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, lastName: e.target.value })
                   }
-                  className="h-10"
+                  className={styles.cls041}
                 />
               </div>
-              <div className="space-y-2">
+              <div className={styles.cls040}>
                 <div className={dialogLabel}>Email</div>
                 <Input
                   value={selectedUser.email ?? ""}
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, email: e.target.value })
                   }
-                  className="h-10"
+                  className={styles.cls041}
                 />
               </div>
-              <div className="space-y-2">
+              <div className={styles.cls040}>
                 <div className={dialogLabel}>Phone</div>
                 <Input
                   value={selectedUser.phone ?? ""}
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, phone: e.target.value })
                   }
-                  className="h-10"
+                  className={styles.cls041}
                 />
               </div>
             </div>
@@ -588,16 +588,16 @@ export function UserManagement() {
             <Button
               onClick={handleSaveEdit}
               disabled={saving}
-              className="bg-green-600 hover:bg-green-700 disabled:opacity-70"
+              className={styles.cls042}
             >
               {saving ? (
-                <span className="inline-flex items-center">
+                <span className={styles.cls043}>
                   <svg
-                    className="animate-spin h-4 w-4 mr-2"
+                    className={styles.cls044}
                     viewBox="0 0 24 24"
                   >
                     <circle
-                      className="opacity-25"
+                      className={styles.cls045}
                       cx="12"
                       cy="12"
                       r="10"
@@ -606,12 +606,12 @@ export function UserManagement() {
                       fill="none"
                     />
                     <path
-                      className="opacity-75"
+                      className={styles.cls046}
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                   </svg>
-                  Saving…
+                  Savingâ€¦
                 </span>
               ) : (
                 "Save Changes"
@@ -624,13 +624,13 @@ export function UserManagement() {
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
         <DialogContent className={dialogPanel}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <DialogTitle className={styles.cls034}>
+              <AlertTriangle className={styles.cls047} />
               {selectedUser?.status === "active"
                 ? "Suspend User Account"
                 : "Reactivate User Account"}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
+            <DialogDescription className={styles.cls004}>
               {selectedUser?.status === "active"
                 ? "Are you sure you want to suspend this user account? The user will not be able to log in until reactivated."
                 : "Are you sure you want to reactivate this user account?"}
@@ -638,17 +638,17 @@ export function UserManagement() {
           </DialogHeader>
 
           {selectedUser && (
-            <div className="py-2 space-y-1">
+            <div className={styles.cls048}>
               <div>
                 <span className={dialogSectionTitle}>User: </span>
-                <span className="text-sm text-gray-800">
+                <span className={styles.cls049}>
                   {selectedUser.displayName || selectedUser.id}
                 </span>
               </div>
               <div>
                 <span className={dialogSectionTitle}>Email: </span>
-                <span className="text-sm text-gray-800">
-                  {selectedUser.email || "—"}
+                <span className={styles.cls049}>
+                  {selectedUser.email || "â€”"}
                 </span>
               </div>
             </div>
@@ -668,13 +668,13 @@ export function UserManagement() {
               }
             >
               {saving ? (
-                <span className="inline-flex items-center">
+                <span className={styles.cls043}>
                   <svg
-                    className="animate-spin h-4 w-4 mr-2"
+                    className={styles.cls044}
                     viewBox="0 0 24 24"
                   >
                     <circle
-                      className="opacity-25"
+                      className={styles.cls045}
                       cx="12"
                       cy="12"
                       r="10"
@@ -683,12 +683,12 @@ export function UserManagement() {
                       fill="none"
                     />
                     <path
-                      className="opacity-75"
+                      className={styles.cls046}
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                   </svg>
-                  Processing…
+                  Processing...
                 </span>
               ) : selectedUser?.status === "active" ? (
                 "Suspend Account"
@@ -702,4 +702,6 @@ export function UserManagement() {
     </div>
   );
 }
+
+
 

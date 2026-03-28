@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -30,7 +30,7 @@ import {
   removeUserDisease,
 } from "../../services/userProfile";
 import { deactivateAccountApi } from "../../services/auth";
-
+import { styles } from '../../styles/user/UserProfile.styles.js';
 const getErrorMessage = (e, fallback) =>
   e?.response?.data?.message || e?.response?.data?.title || e?.message || fallback;
 
@@ -295,9 +295,9 @@ export function UserProfile() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="flex items-center gap-3 text-gray-700">
-          <Loader2 className="h-5 w-5 animate-spin" />
+      <div className={styles.cls001}>
+        <div className={styles.cls002}>
+          <Loader2 className={styles.cls003} />
           <span>Loading your profile...</span>
         </div>
       </div>
@@ -305,10 +305,10 @@ export function UserProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={styles.cls004}>
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900">My Profile</h2>
-        <p className="mt-1 text-sm text-gray-700">
+        <h2 className={styles.cls005}>My Profile</h2>
+        <p className={styles.cls006}>
           Manage your personal profile and health data.
         </p>
       </div>
@@ -323,9 +323,9 @@ export function UserProfile() {
           }
         >
           {notice.type === "error" ? (
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className={styles.cls007} />
           ) : (
-            <Check className="h-4 w-4 text-green-600" />
+            <Check className={styles.cls008} />
           )}
           <AlertDescription className={notice.type === "error" ? "m-0 text-red-800" : "m-0 text-green-800"}>
             {notice.text}
@@ -334,105 +334,105 @@ export function UserProfile() {
       ) : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl border border-gray-200 bg-gray-100 p-1.5 md:grid-cols-4">
+        <TabsList className={styles.cls009}>
           <TabsTrigger
             value="overview"
-            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            className={styles.cls010}
           >
-            <Info className="mr-2 h-4 w-4" />
+            <Info className={styles.cls011} />
             General Info
           </TabsTrigger>
           <TabsTrigger
             value="personal"
-            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            className={styles.cls010}
           >
-            <UserRoundPen className="mr-2 h-4 w-4" />
+            <UserRoundPen className={styles.cls011} />
             Personal
           </TabsTrigger>
           <TabsTrigger
             value="health"
-            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            className={styles.cls010}
           >
-            <ShieldCheck className="mr-2 h-4 w-4" />
+            <ShieldCheck className={styles.cls011} />
             Health Updates
           </TabsTrigger>
           <TabsTrigger
             value="delete"
-            className="rounded-xl text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            className={styles.cls010}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className={styles.cls011} />
             Delete
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <Card className="border-gray-200">
+        <TabsContent value="overview" className={styles.cls004}>
+          <Card className={styles.cls012}>
             <CardHeader>
-              <CardTitle className="text-gray-900">Profile Informations</CardTitle>
+              <CardTitle className={styles.cls013}>Profile Informations</CardTitle>
               <CardDescription>Latest account and health information</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <CardContent className={styles.cls014}>
+              <div className={styles.cls015}>
                 <div>
-                  <Label className="text-xs uppercase tracking-wide text-gray-500">Full Name</Label>
-                  <p className="mt-1 text-sm font-medium text-gray-900">
+                  <Label className={styles.cls016}>Full Name</Label>
+                  <p className={styles.cls017}>
                     {`${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Not set"}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wide text-gray-500">Email</Label>
-                  <p className="mt-1 text-sm font-medium text-gray-900">{profile.email || "Not set"}</p>
+                  <Label className={styles.cls016}>Email</Label>
+                  <p className={styles.cls017}>{profile.email || "Not set"}</p>
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wide text-gray-500">Date of Birth</Label>
-                  <p className="mt-1 text-sm font-medium text-gray-900">{formatDate(profile.dateOfBirth)}</p>
+                  <Label className={styles.cls016}>Date of Birth</Label>
+                  <p className={styles.cls017}>{formatDate(profile.dateOfBirth)}</p>
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wide text-gray-500">Gender</Label>
-                  <p className="mt-1 text-sm font-medium text-gray-900">{humanizeGender(profile.gender)}</p>
+                  <Label className={styles.cls016}>Gender</Label>
+                  <p className={styles.cls017}>{humanizeGender(profile.gender)}</p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800">Selected Allergies</Label>
+              <div className={styles.cls018}>
+                <Label className={styles.cls019}>Selected Allergies</Label>
                 {selectedAllergyNames.length ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className={styles.cls020}>
                     {selectedAllergyNames.map((name) => (
                       <Badge
                         key={`allergy-current-${name}`}
-                        className="border border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100"
+                        className={styles.cls021}
                       >
                         {name}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No allergies selected.</p>
+                  <p className={styles.cls022}>No allergies selected.</p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800">Selected Diseases</Label>
+              <div className={styles.cls018}>
+                <Label className={styles.cls019}>Selected Diseases</Label>
                 {selectedDiseaseNames.length ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className={styles.cls020}>
                     {selectedDiseaseNames.map((name) => (
                       <Badge
                         key={`disease-current-${name}`}
-                        className="border border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-100"
+                        className={styles.cls023}
                       >
                         {name}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No diseases selected.</p>
+                  <p className={styles.cls022}>No diseases selected.</p>
                 )}
               </div>
 
               {isFemale ? (
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5">
-                  <Label className="text-xs uppercase tracking-wide text-indigo-700">Pregnancy Status</Label>
-                  <p className="mt-1 text-sm font-medium text-indigo-900">
+                <div className={styles.cls024}>
+                  <Label className={styles.cls025}>Pregnancy Status</Label>
+                  <p className={styles.cls026}>
                     {health.isPregnant ? "Pregnant" : "Not pregnant"}
                   </p>
                 </div>
@@ -442,14 +442,14 @@ export function UserProfile() {
         </TabsContent>
 
         <TabsContent value="personal">
-          <Card className="border-gray-200">
+          <Card className={styles.cls012}>
             <CardHeader>
               <CardTitle>Update Personal Information</CardTitle>
               <CardDescription>Keep your account details up to date</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+            <CardContent className={styles.cls014}>
+              <div className={styles.cls015}>
+                <div className={styles.cls018}>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     id="firstName"
@@ -457,7 +457,7 @@ export function UserProfile() {
                     onChange={(e) => setProfile((p) => ({ ...p, firstName: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className={styles.cls018}>
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
@@ -467,7 +467,7 @@ export function UserProfile() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className={styles.cls018}>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -475,12 +475,12 @@ export function UserProfile() {
                   value={profile.email}
                   readOnly
                   disabled
-                  className="cursor-not-allowed bg-slate-100 text-slate-500"
+                  className={styles.cls027}
                 />
-                <p className="text-xs text-slate-500">Email cannot be changed from this screen.</p>
+                <p className={styles.cls028}>Email cannot be changed from this screen.</p>
               </div>
 
-              <div className="space-y-2">
+              <div className={styles.cls018}>
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
@@ -489,8 +489,8 @@ export function UserProfile() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+              <div className={styles.cls015}>
+                <div className={styles.cls018}>
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Input
                     id="dateOfBirth"
@@ -499,21 +499,21 @@ export function UserProfile() {
                     onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className={styles.cls018}>
                   <Label htmlFor="gender">Gender</Label>
-                  <Input id="gender" value={humanizeGender(profile.gender)} readOnly disabled className="cursor-not-allowed bg-slate-100 text-slate-500" />
-                  <p className="text-xs text-slate-500">Gender cannot be changed from this screen.</p>
+                  <Input id="gender" value={humanizeGender(profile.gender)} readOnly disabled className={styles.cls027} />
+                  <p className={styles.cls028}>Gender cannot be changed from this screen.</p>
                 </div>
               </div>
 
               <Button
                 onClick={handleSaveProfile}
                 disabled={savingProfile}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className={styles.cls029}
               >
                 {savingProfile ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={styles.cls030} />
                     Saving...
                   </>
                 ) : (
@@ -524,25 +524,25 @@ export function UserProfile() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="health" className="space-y-6">
-          <Card className="border-slate-200 bg-white">
+        <TabsContent value="health" className={styles.cls004}>
+          <Card className={styles.cls031}>
             <CardHeader>
               <CardTitle>Update Health Profile</CardTitle>
               <CardDescription>
                 Each allergy and disease is updated independently as soon as you click it.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <Alert className="flex items-center gap-2 border-slate-200 bg-slate-50">
-                <ShieldCheck className="h-4 w-4 text-slate-700" />
-                <AlertDescription className="m-0 text-slate-700">
+            <CardContent className={styles.cls004}>
+              <Alert className={styles.cls032}>
+                <ShieldCheck className={styles.cls033} />
+                <AlertDescription className={styles.cls034}>
                   Your health data is confidential and used only for safer food recommendations.
                 </AlertDescription>
               </Alert>
 
-              <div className="space-y-3">
-                <h3 className="text-base font-semibold text-gray-900">Allergies</h3>
-                <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className={styles.cls035}>
+                <h3 className={styles.cls036}>Allergies</h3>
+                <div className={styles.cls037}>
                   {allergyCatalog.map((item) => {
                     const id = Number(item.id);
                     const checked = selectedAllergyIds.includes(id);
@@ -555,20 +555,20 @@ export function UserProfile() {
                         } ${busy ? "opacity-70" : ""}`}
                       >
                         <Checkbox checked={checked} onCheckedChange={() => handleToggleAllergy(item)} disabled={busy} />
-                        <span className="text-sm text-gray-800">{item.name}</span>
-                        {busy ? <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin text-gray-500" /> : null}
+                        <span className={styles.cls038}>{item.name}</span>
+                        {busy ? <Loader2 className={styles.cls039} /> : null}
                       </label>
                     );
                   })}
                   {allergyCatalog.length === 0 ? (
-                    <p className="text-sm text-gray-500">No allergies found.</p>
+                    <p className={styles.cls022}>No allergies found.</p>
                   ) : null}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h3 className="text-base font-semibold text-gray-900">Chronic Diseases</h3>
-                <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2">
+              <div className={styles.cls035}>
+                <h3 className={styles.cls036}>Chronic Diseases</h3>
+                <div className={styles.cls040}>
                   {diseaseCatalog.map((item) => {
                     const id = Number(item.id);
                     const checked = selectedDiseaseIds.includes(id);
@@ -581,32 +581,32 @@ export function UserProfile() {
                         } ${busy ? "opacity-70" : ""}`}
                       >
                         <Checkbox checked={checked} onCheckedChange={() => handleToggleDisease(item)} disabled={busy} />
-                        <span className="text-sm text-gray-800">{item.name}</span>
-                        {busy ? <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin text-gray-500" /> : null}
+                        <span className={styles.cls038}>{item.name}</span>
+                        {busy ? <Loader2 className={styles.cls039} /> : null}
                       </label>
                     );
                   })}
                   {diseaseCatalog.length === 0 ? (
-                    <p className="text-sm text-gray-500">No diseases found.</p>
+                    <p className={styles.cls022}>No diseases found.</p>
                   ) : null}
                 </div>
               </div>
 
               {isFemale ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-base font-semibold text-slate-900">Pregnancy Status</h3>
-                  <div className="mt-4 flex items-center gap-3">
+                <div className={styles.cls041}>
+                  <h3 className={styles.cls042}>Pregnancy Status</h3>
+                  <div className={styles.cls043}>
                     <Checkbox
                       id="isPregnant"
                       checked={health.isPregnant}
                       onCheckedChange={(checked) => handlePregnancyUpdate(Boolean(checked))}
                       disabled={savingPregnancy}
-                      className="h-5 w-5 border-slate-400 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:text-white"
+                      className={styles.cls044}
                     />
-                    <Label htmlFor="isPregnant" className="cursor-pointer text-sm text-slate-900">
+                    <Label htmlFor="isPregnant" className={styles.cls045}>
                       I am currently pregnant
                     </Label>
-                    {savingPregnancy ? <Loader2 className="h-4 w-4 animate-spin text-slate-700" /> : null}
+                    {savingPregnancy ? <Loader2 className={styles.cls046} /> : null}
                   </div>
                 </div>
               ) : null}
@@ -615,32 +615,32 @@ export function UserProfile() {
         </TabsContent>
 
         <TabsContent value="delete">
-          <Card className="border-red-200">
+          <Card className={styles.cls047}>
             <CardHeader>
-              <CardTitle className="text-red-700">Delete Account</CardTitle>
+              <CardTitle className={styles.cls048}>Delete Account</CardTitle>
               <CardDescription>Permanently remove your account and all related data</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert className="flex items-center gap-2 border-red-200 bg-red-50">
-                <Trash2 className="h-4 w-4 text-red-700" />
-                <AlertDescription className="m-0 text-red-900">
+            <CardContent className={styles.cls014}>
+              <Alert className={styles.cls049}>
+                <Trash2 className={styles.cls050} />
+                <AlertDescription className={styles.cls051}>
                   This action is irreversible. All profile and health data will be lost permanently.
                 </AlertDescription>
               </Alert>
 
               {!showDeleteConfirm ? (
                 <Button
-                  className="w-full bg-red-600 text-white hover:bg-red-700"
+                  className={styles.cls052}
                   onClick={() => {
                     setShowDeleteConfirm(true);
                     setDeleteConfirmText("");
                   }}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className={styles.cls011} />
                   Proceed to Delete Account
                 </Button>
               ) : (
-                <div className="space-y-3">
+                <div className={styles.cls035}>
                   <Label htmlFor="deleteConfirm">Type DELETE to confirm</Label>
                   <Input
                     id="deleteConfirm"
@@ -648,10 +648,10 @@ export function UserProfile() {
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
                     placeholder="DELETE"
                   />
-                  <div className="flex gap-3">
+                  <div className={styles.cls053}>
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className={styles.cls054}
                       onClick={() => {
                         setShowDeleteConfirm(false);
                         setDeleteConfirmText("");
@@ -660,7 +660,7 @@ export function UserProfile() {
                       Cancel
                     </Button>
                     <Button
-                      className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                      className={styles.cls055}
                       disabled={deleteConfirmText !== "DELETE" || deletingAccount}
                       onClick={handleDeleteAccount}
                     >
@@ -676,3 +676,5 @@ export function UserProfile() {
     </div>
   );
 }
+
+

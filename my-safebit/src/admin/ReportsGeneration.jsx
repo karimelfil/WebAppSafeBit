@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import axios from "axios";
-
+import { styles } from '../styles/admin/ReportsGeneration.styles.js';
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import {
@@ -141,48 +141,48 @@ export function ReportsGeneration() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={styles.cls001}>
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Generate Reports</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className={styles.cls002}>Generate Reports</h2>
+        <p className={styles.cls003}>
           Generate analytics reports and export them .
         </p>
       </div>
 
       {!!errorMessage && (
-        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="m-0 text-red-800">{errorMessage}</AlertDescription>
+        <Alert className={styles.cls004}>
+          <AlertTriangle className={styles.cls005} />
+          <AlertDescription className={styles.cls006}>{errorMessage}</AlertDescription>
         </Alert>
       )}
       {!!successMessage && (
-        <Alert className="flex items-center gap-2 bg-green-50 border-green-200">
-          <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="m-0 text-green-800">{successMessage}</AlertDescription>
+        <Alert className={styles.cls007}>
+          <Check className={styles.cls008} />
+          <AlertDescription className={styles.cls009}>{successMessage}</AlertDescription>
         </Alert>
       )}
 
-      <Card className="border-gray-200 shadow-sm overflow-hidden">
+      <Card className={styles.cls010}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+          <CardTitle className={styles.cls011}>
+            <Filter className={styles.cls012} />
             Report Configuration
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-5 bg-gradient-to-b from-white to-emerald-50/30">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label className="text-gray-800">Report Type</Label>
+        <CardContent className={styles.cls013}>
+          <div className={styles.cls014}>
+            <div className={styles.cls015}>
+              <Label className={styles.cls016}>Report Type</Label>
               <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger className="h-11 bg-white border-gray-300 focus:ring-green-600">
+                <SelectTrigger className={styles.cls017}>
                   <SelectValue placeholder="Select report type" />
                 </SelectTrigger>
-                <SelectContent className="z-[120] bg-white border-gray-300 shadow-2xl backdrop-blur-none">
+                <SelectContent className={styles.cls018}>
                   {REPORT_TYPES.map((option) => (
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="py-2.5 focus:bg-green-50"
+                      className={styles.cls019}
                     >
                       {option.label}
                     </SelectItem>
@@ -191,18 +191,18 @@ export function ReportsGeneration() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-800">Date Range</Label>
+            <div className={styles.cls015}>
+              <Label className={styles.cls016}>Date Range</Label>
               <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className="h-11 bg-white border-gray-300 focus:ring-green-600">
+                <SelectTrigger className={styles.cls017}>
                   <SelectValue placeholder="Select date range" />
                 </SelectTrigger>
-                <SelectContent className="z-[120] bg-white border-gray-300 shadow-2xl backdrop-blur-none">
+                <SelectContent className={styles.cls018}>
                   {DATE_RANGES.map((option) => (
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="py-2.5 focus:bg-green-50"
+                      className={styles.cls019}
                     >
                       {option.label}
                     </SelectItem>
@@ -211,18 +211,18 @@ export function ReportsGeneration() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-800">Export Format</Label>
+            <div className={styles.cls015}>
+              <Label className={styles.cls016}>Export Format</Label>
               <Select value={exportFormat} onValueChange={setExportFormat}>
-                <SelectTrigger className="h-11 bg-white border-gray-300 focus:ring-green-600">
+                <SelectTrigger className={styles.cls017}>
                   <SelectValue placeholder="Select export format" />
                 </SelectTrigger>
-                <SelectContent className="z-[120] bg-white border-gray-300 shadow-2xl backdrop-blur-none">
+                <SelectContent className={styles.cls018}>
                   {EXPORT_FORMATS.map((option) => (
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="py-2.5 focus:bg-green-50"
+                      className={styles.cls019}
                     >
                       {option.label}
                     </SelectItem>
@@ -232,34 +232,34 @@ export function ReportsGeneration() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-              <p className="text-xs text-gray-500">Selected Report</p>
-              <p className="mt-1 text-sm font-medium text-gray-900">{reportTypeLabel}</p>
+          <div className={styles.cls020}>
+            <div className={styles.cls021}>
+              <p className={styles.cls022}>Selected Report</p>
+              <p className={styles.cls023}>{reportTypeLabel}</p>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-green-600" />
+            <div className={styles.cls024}>
+              <CalendarDays className={styles.cls008} />
               <div>
-                <p className="text-xs text-gray-500">Date Range</p>
-                <p className="text-sm font-medium text-gray-900">{selectedDateRangeLabel}</p>
+                <p className={styles.cls022}>Date Range</p>
+                <p className={styles.cls025}>{selectedDateRangeLabel}</p>
               </div>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-green-600" />
+            <div className={styles.cls024}>
+              <Layers className={styles.cls008} />
               <div>
-                <p className="text-xs text-gray-500">Export As</p>
-                <p className="text-sm font-medium text-gray-900">{exportFormat}</p>
+                <p className={styles.cls022}>Export As</p>
+                <p className={styles.cls025}>{exportFormat}</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className={styles.cls026}>
             <Button
               onClick={handleGenerateReport}
               disabled={isGenerating}
-              className="h-11 w-full bg-green-600 hover:bg-green-700 shadow-sm"
+              className={styles.cls027}
             >
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className={styles.cls028} />
               {isGenerating ? "Generating..." : "Generate Report"}
             </Button>
 
@@ -267,9 +267,9 @@ export function ReportsGeneration() {
               onClick={handleExportReport}
               disabled={isExporting}
               variant="outline"
-              className="h-11 w-full border-gray-300 bg-white hover:bg-gray-50"
+              className={styles.cls029}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className={styles.cls028} />
               {isExporting ? "Exporting..." : "Export Report"}
             </Button>
           </div>
@@ -277,11 +277,11 @@ export function ReportsGeneration() {
       </Card>
 
       {generatedReport && (
-        <Card className="border-gray-200 shadow-sm overflow-hidden">
+        <Card className={styles.cls010}>
           <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className={styles.cls030}>
               <div>
-                <CardTitle className="text-xl">{reportTypeLabel}</CardTitle>
+                <CardTitle className={styles.cls031}>{reportTypeLabel}</CardTitle>
                 <CardDescription>
                   Generated at{" "}
                   {generatedReport.generatedAt
@@ -289,27 +289,27 @@ export function ReportsGeneration() {
                     : "-"}
                 </CardDescription>
               </div>
-              <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1">
-                <span className="text-sm font-medium text-blue-800">
+              <div className={styles.cls032}>
+                <span className={styles.cls033}>
                   Total records: {generatedReport.totalRecords}
                 </span>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-              <Table className="min-w-full">
-                <TableHeader className="bg-gray-50/90">
-                  <TableRow className="border-b border-gray-200">
-                    <TableHead className="text-gray-700">Category</TableHead>
-                    <TableHead className="text-gray-700">Count</TableHead>
-                    <TableHead className="text-gray-700">Percentage</TableHead>
+            <div className={styles.cls034}>
+              <Table className={styles.cls035}>
+                <TableHeader className={styles.cls036}>
+                  <TableRow className={styles.cls037}>
+                    <TableHead className={styles.cls038}>Category</TableHead>
+                    <TableHead className={styles.cls038}>Count</TableHead>
+                    <TableHead className={styles.cls038}>Percentage</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {generatedReport.data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="py-8 text-center text-gray-500">
+                      <TableCell colSpan={3} className={styles.cls039}>
                         No records found for the selected filters.
                       </TableCell>
                     </TableRow>
@@ -319,19 +319,19 @@ export function ReportsGeneration() {
                         key={`${item.category}-${idx}`}
                         className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
                       >
-                        <TableCell className="font-medium text-gray-900">
+                        <TableCell className={styles.cls040}>
                           {item.category}
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex min-w-10 justify-center rounded-full bg-emerald-50 px-2 py-0.5 text-sm font-medium text-emerald-700">
+                          <span className={styles.cls041}>
                             {item.count}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-2.5 w-40 rounded-full bg-gray-100 overflow-hidden">
+                          <div className={styles.cls042}>
+                            <div className={styles.cls043}>
                               <div
-                                className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
+                                className={styles.cls044}
                                 style={{
                                   width: `${Math.min(
                                     100,
@@ -340,7 +340,7 @@ export function ReportsGeneration() {
                                 }}
                               />
                             </div>
-                            <span className="text-sm font-medium text-gray-700">
+                            <span className={styles.cls045}>
                               {Number(item.percentage).toFixed(2)}%
                             </span>
                           </div>
@@ -359,3 +359,5 @@ export function ReportsGeneration() {
 }
 
 export default ReportsGeneration;
+
+

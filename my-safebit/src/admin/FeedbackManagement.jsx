@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -24,7 +24,7 @@ import {
   getFeedbackReportDetails,
   updateFeedbackStatus,
 } from "../services/adminFeedbackService";
-
+import { styles } from '../styles/admin/FeedbackManagement.styles.js';
 const formatDate = (value) => {
   if (!value) return "-";
   const d = new Date(value);
@@ -175,13 +175,13 @@ export function FeedbackManagement() {
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending":
-        return <Clock className="h-4 w-4" />;
+        return <Clock className={styles.cls001} />;
       case "reviewed":
-        return <Eye className="h-4 w-4" />;
+        return <Eye className={styles.cls001} />;
       case "resolved":
-        return <CheckCircle className="h-4 w-4" />;
+        return <CheckCircle className={styles.cls001} />;
       default:
-        return <AlertCircle className="h-4 w-4" />;
+        return <AlertCircle className={styles.cls001} />;
     }
   };
 
@@ -193,90 +193,90 @@ export function FeedbackManagement() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={styles.cls002}>
+      <div className={styles.cls003}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Issue Reports</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className={styles.cls004}>Issue Reports</h2>
+          <p className={styles.cls005}>
             Manage user-submitted reports about dish detection issues
           </p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className={styles.cls006}>
+          <Search className={styles.cls007} />
           <Input
             placeholder="Search reports..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className={styles.cls008}
           />
         </div>
       </div>
 
       {!!errorMessage && (
-        <Alert className="flex items-center gap-2 bg-red-50 border-red-200">
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="m-0 text-red-800">{errorMessage}</AlertDescription>
+        <Alert className={styles.cls009}>
+          <AlertCircle className={styles.cls010} />
+          <AlertDescription className={styles.cls011}>{errorMessage}</AlertDescription>
         </Alert>
       )}
       {!!successMessage && (
-        <Alert className="flex items-center gap-2 bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="m-0 text-green-800">{successMessage}</AlertDescription>
+        <Alert className={styles.cls012}>
+          <CheckCircle className={styles.cls013} />
+          <AlertDescription className={styles.cls014}>{successMessage}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+      <div className={styles.cls015}>
+        <div className={styles.cls016}>
+          <div className={styles.cls017}>
             <div>
-              <p className="text-sm font-medium text-blue-700 mb-1">Total Reports</p>
-              <p className="text-2xl font-bold text-blue-900">{reports.length}</p>
+              <p className={styles.cls018}>Total Reports</p>
+              <p className={styles.cls019}>{reports.length}</p>
             </div>
-            <div className="p-3 bg-blue-600 rounded-xl">
-              <AlertCircle className="h-6 w-6 text-white" />
+            <div className={styles.cls020}>
+              <AlertCircle className={styles.cls021} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+        <div className={styles.cls022}>
+          <div className={styles.cls017}>
             <div>
-              <p className="text-sm font-medium text-yellow-700 mb-1">Pending Review</p>
-              <p className="text-2xl font-bold text-yellow-900">{pendingReports}</p>
+              <p className={styles.cls023}>Pending Review</p>
+              <p className={styles.cls024}>{pendingReports}</p>
             </div>
-            <div className="p-3 bg-yellow-600 rounded-xl">
-              <Clock className="h-6 w-6 text-white" />
+            <div className={styles.cls025}>
+              <Clock className={styles.cls021} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+        <div className={styles.cls016}>
+          <div className={styles.cls017}>
             <div>
-              <p className="text-sm font-medium text-blue-700 mb-1">Under Review</p>
-              <p className="text-2xl font-bold text-blue-900">{reviewedReports}</p>
+              <p className={styles.cls018}>Under Review</p>
+              <p className={styles.cls019}>{reviewedReports}</p>
             </div>
-            <div className="p-3 bg-blue-600 rounded-xl">
-              <Eye className="h-6 w-6 text-white" />
+            <div className={styles.cls020}>
+              <Eye className={styles.cls021} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+        <div className={styles.cls026}>
+          <div className={styles.cls017}>
             <div>
-              <p className="text-sm font-medium text-green-700 mb-1">Resolved</p>
-              <p className="text-2xl font-bold text-green-900">{resolvedReports}</p>
+              <p className={styles.cls027}>Resolved</p>
+              <p className={styles.cls028}>{resolvedReports}</p>
             </div>
-            <div className="p-3 bg-green-600 rounded-xl">
-              <CheckCircle className="h-6 w-6 text-white" />
+            <div className={styles.cls029}>
+              <CheckCircle className={styles.cls021} />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-1.5 shadow-sm">
-        <div className="flex flex-wrap gap-1">
+      <div className={styles.cls030}>
+        <div className={styles.cls031}>
           {statusTabs.map((tab) => {
             const isActive = activeStatus === tab.key;
             return (
@@ -306,43 +306,43 @@ export function FeedbackManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className={styles.cls032}>
+        <div className={styles.cls033}>
           <Table>
-            <TableHeader className="bg-gray-50">
+            <TableHeader className={styles.cls034}>
               <TableRow>
-                <TableHead className="font-semibold text-gray-900">Report ID</TableHead>
-                <TableHead className="font-semibold text-gray-900">Dish Name</TableHead>
-                <TableHead className="font-semibold text-gray-900">User Email</TableHead>
-                <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                <TableHead className="font-semibold text-gray-900">Submitted</TableHead>
-                <TableHead className="text-right font-semibold text-gray-900">Actions</TableHead>
+                <TableHead className={styles.cls035}>Report ID</TableHead>
+                <TableHead className={styles.cls035}>Dish Name</TableHead>
+                <TableHead className={styles.cls035}>User Email</TableHead>
+                <TableHead className={styles.cls035}>Status</TableHead>
+                <TableHead className={styles.cls035}>Submitted</TableHead>
+                <TableHead className={styles.cls036}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-gray-500">
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                  <TableCell colSpan={6} className={styles.cls037}>
+                    <span className={styles.cls038}>
+                      <Loader2 className={styles.cls039} />
                       Loading feedback reports...
                     </span>
                   </TableCell>
                 </TableRow>
               ) : filteredReports.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-gray-500">
+                  <TableCell colSpan={6} className={styles.cls037}>
                     No reports found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredReports.map((report) => (
-                  <TableRow key={report.reportID} className="hover:bg-gray-50 transition-colors">
-                    <TableCell className="font-medium text-gray-900">{report.reportID}</TableCell>
-                    <TableCell className="font-medium text-gray-900">{report.dishName}</TableCell>
-                    <TableCell className="text-sm text-gray-600">{report.userEmail}</TableCell>
+                  <TableRow key={report.reportID} className={styles.cls040}>
+                    <TableCell className={styles.cls041}>{report.reportID}</TableCell>
+                    <TableCell className={styles.cls041}>{report.dishName}</TableCell>
+                    <TableCell className={styles.cls042}>{report.userEmail}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className={styles.cls043}>
                         {getStatusIcon(report.status)}
                         <span
                           className={`px-2 py-1 rounded text-xs border ${getStatusColor(report.status)}`}
@@ -351,17 +351,17 @@ export function FeedbackManagement() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className={styles.cls042}>
                       {formatDate(report.submittedAt)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className={styles.cls044}>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleViewReport(report)}
-                        className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        className={styles.cls045}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className={styles.cls046} />
                         View
                       </Button>
                     </TableCell>
@@ -374,36 +374,36 @@ export function FeedbackManagement() {
       </div>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl border border-gray-200 bg-white text-gray-900 shadow-2xl">
+        <DialogContent className={styles.cls047}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-red-600" />
+            <DialogTitle className={styles.cls048}>
+              <div className={styles.cls049}>
+                <AlertCircle className={styles.cls050} />
               </div>
               <div>
-                <div className="font-bold text-gray-900">Issue Report</div>
-                <div className="text-sm font-normal text-gray-600">ID: {selectedReport?.reportID || "-"}</div>
+                <div className={styles.cls051}>Issue Report</div>
+                <div className={styles.cls052}>ID: {selectedReport?.reportID || "-"}</div>
               </div>
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className={styles.cls053}>
               Detailed information about the reported issue
             </DialogDescription>
           </DialogHeader>
 
           {detailsLoading && (
-            <div className="py-8 text-center text-gray-600">
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+            <div className={styles.cls054}>
+              <span className={styles.cls038}>
+                <Loader2 className={styles.cls039} />
                 Loading report details...
               </span>
             </div>
           )}
 
           {!detailsLoading && selectedReport && (
-            <div className="space-y-6 py-4">
+            <div className={styles.cls055}>
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Status</p>
-                <div className="flex items-center gap-2">
+                <p className={styles.cls056}>Status</p>
+                <div className={styles.cls043}>
                   {getStatusIcon(selectedReport.status)}
                   <span
                     className={`px-3 py-2 rounded text-sm border ${getStatusColor(selectedReport.status)}`}
@@ -413,42 +413,42 @@ export function FeedbackManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={styles.cls057}>
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">User Email</p>
-                  <p className="text-sm text-gray-900">{selectedReport.userEmail}</p>
+                  <p className={styles.cls058}>User Email</p>
+                  <p className={styles.cls059}>{selectedReport.userEmail}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">User ID</p>
-                  <p className="text-sm text-gray-900">{selectedReport.userID}</p>
+                  <p className={styles.cls058}>User ID</p>
+                  <p className={styles.cls059}>{selectedReport.userID}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Dish Name</p>
-                  <p className="text-sm text-gray-900">{selectedReport.dishName}</p>
+                  <p className={styles.cls058}>Dish Name</p>
+                  <p className={styles.cls059}>{selectedReport.dishName}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Dish ID</p>
-                  <p className="text-sm text-gray-900">{selectedReport.dishID}</p>
+                  <p className={styles.cls058}>Dish ID</p>
+                  <p className={styles.cls059}>{selectedReport.dishID}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Submitted At</p>
-                  <p className="text-sm text-gray-900">{formatDate(selectedReport.submittedAt)}</p>
+                <div className={styles.cls060}>
+                  <p className={styles.cls058}>Submitted At</p>
+                  <p className={styles.cls059}>{formatDate(selectedReport.submittedAt)}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Report Message</p>
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-900 leading-relaxed">
+                <p className={styles.cls056}>Report Message</p>
+                <div className={styles.cls061}>
+                  <p className={styles.cls062}>
                     {selectedReport.reportMessage || "No detailed message provided."}
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
+              <div className={styles.cls063}>
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className={styles.cls064}
                   onClick={() => handleUpdateStatus("reviewed")}
                   disabled={
                     updatingStatus ||
@@ -459,7 +459,7 @@ export function FeedbackManagement() {
                   {updatingStatus ? "Updating..." : "Mark as Reviewed"}
                 </Button>
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className={styles.cls065}
                   onClick={() => handleUpdateStatus("resolved")}
                   disabled={updatingStatus || selectedReport.status === "resolved"}
                 >
@@ -475,3 +475,5 @@ export function FeedbackManagement() {
 }
 
 export default FeedbackManagement;
+
+

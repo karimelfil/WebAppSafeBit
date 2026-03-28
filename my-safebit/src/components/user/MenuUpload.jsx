@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -16,10 +16,10 @@ import {
   Shield,
   AlertCircle,
   Ban,
+  Sparkles,
 } from 'lucide-react';
 import { http } from '../../services/http';
-
-
+import { styles } from '../../styles/user/MenuUpload.styles.js';
 const IDB_DB = 'safebite_menu_upload';
 const IDB_STORE = 'files';
 const IDB_KEY = 'last_menu_file';
@@ -201,6 +201,7 @@ function storableToFile(stored) {
 }
 
 export function MenuUpload() {
+  const RESULTS_PER_PAGE = 6;
   const [restaurantName, setRestaurantName] = useState(() => {
     if (typeof window === 'undefined') return '';
     return sessionStorage.getItem('restaurantName') || '';
@@ -210,6 +211,8 @@ export function MenuUpload() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectedDishes, setDetectedDishes] = useState(null);
+  const [analysisSummary, setAnalysisSummary] = useState('');
+  const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [showResults, setShowResults] = useState(false);
 
   const [showReportForm, setShowReportForm] = useState(false);
@@ -271,6 +274,8 @@ export function MenuUpload() {
 
     setErrorMessage('');
     setDetectedDishes(null);
+    setAnalysisSummary('');
+    setCurrentResultsPage(1);
     setShowResults(false);
 
 
@@ -337,6 +342,12 @@ export function MenuUpload() {
       const aiResult = payload?.aiResult || {};
       const apiDishesRaw = aiResult?.dishes || aiResult?.Dishes;
       const apiDishes = Array.isArray(apiDishesRaw) ? apiDishesRaw : [];
+      const summaryText =
+        aiResult?.summary?.short_summary ||
+        aiResult?.summary?.shortSummary ||
+        payload?.summary?.short_summary ||
+        payload?.summary?.shortSummary ||
+        '';
 
       const storedDishes = extractStoredDishes(payload);
       const storedDishIdByName = new Map(storedDishes.map((dish) => [dish.name, dish.id]));
@@ -350,6 +361,8 @@ export function MenuUpload() {
       });
 
       setDetectedDishes(normalizedDishes);
+      setAnalysisSummary(String(summaryText).trim());
+      setCurrentResultsPage(1);
       setShowResults(true);
     } catch (error) {
       const apiMessage =
@@ -360,6 +373,8 @@ export function MenuUpload() {
 
       setErrorMessage(apiMessage);
       setDetectedDishes(null);
+      setAnalysisSummary('');
+      setCurrentResultsPage(1);
       setShowResults(false);
     } finally {
       setIsProcessing(false);
@@ -370,6 +385,8 @@ export function MenuUpload() {
     setUploadedFile(null);
     setPreviewUrl(null);
     setDetectedDishes(null);
+    setAnalysisSummary('');
+    setCurrentResultsPage(1);
     setShowResults(false);
     setIsProcessing(false);
     setShowReportForm(false);
@@ -437,6 +454,10 @@ export function MenuUpload() {
   const warningDishes = detectedDishes?.filter((dish) => dish.hasWarning || dish.category === 'CAUTION').length || 0;
   const unsafeDishes = detectedDishes?.filter((dish) => dish.isUnsafe).length || 0;
   const totalDishes = detectedDishes?.length || 0;
+  const totalResultPages = Math.max(1, Math.ceil(totalDishes / RESULTS_PER_PAGE));
+  const paginatedDishes = detectedDishes?.slice((currentResultsPage - 1) * RESULTS_PER_PAGE, currentResultsPage * RESULTS_PER_PAGE) || [];
+  const currentStart = totalDishes === 0 ? 0 : (currentResultsPage - 1) * RESULTS_PER_PAGE + 1;
+  const currentEnd = Math.min(currentResultsPage * RESULTS_PER_PAGE, totalDishes);
 
   const safePercentage = totalDishes > 0 ? Math.round((safeDishes / totalDishes) * 100) : 0;
   const safetyTone =
@@ -446,31 +467,31 @@ export function MenuUpload() {
 
   if (showReportForm) {
     return (
-      <div className="space-y-6 max-w-2xl mx-auto">
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Report Detection Issue</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Tell us what is wrong with <span className="font-medium text-gray-900">{selectedDish?.name || 'this dish'}</span>
+      <div className={styles.cls001}>
+        <div className={styles.cls002}>
+          <h2 className={styles.cls003}>Report Detection Issue</h2>
+          <p className={styles.cls004}>
+            Tell us what is wrong with <span className={styles.cls005}>{selectedDish?.name || 'this dish'}</span>
           </p>
         </div>
 
-        <Card className="border-gray-200 shadow-sm bg-white">
-          <CardContent className="p-6 md:p-8 space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Dish</p>
-              <p className="text-base font-semibold text-gray-900">{selectedDish?.name || '-'}</p>
-              <p className="text-xs text-gray-500 mt-1">Dish ID: {selectedDish?.id ?? 'Not available'}</p>
+        <Card className={styles.cls006}>
+          <CardContent className={styles.cls007}>
+            <div className={styles.cls008}>
+              <p className={styles.cls009}>Dish</p>
+              <p className={styles.cls010}>{selectedDish?.name || '-'}</p>
+              <p className={styles.cls011}>Dish ID: {selectedDish?.id ?? 'Not available'}</p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Your Message</label>
+              <label className={styles.cls012}>Your Message</label>
               <Textarea
                 placeholder="Describe the incorrect detection, missing ingredients, or any issue..."
                 value={reportMessage}
                 onChange={(e) => setReportMessage(e.target.value)}
-                className="min-h-36 resize-none border-gray-300 !bg-white !text-gray-900 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-gray-900"
+                className={styles.cls013}
               />
-              <p className="text-xs text-gray-500 mt-2">Be specific so we can improve detection quality.</p>
+              <p className={styles.cls014}>Be specific so we can improve detection quality.</p>
             </div>
 
             {reportError && (
@@ -485,19 +506,19 @@ export function MenuUpload() {
               </Alert>
             )}
 
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" className="flex-1 h-11" onClick={() => setShowReportForm(false)} disabled={reportSubmitting}>
+            <div className={styles.cls015}>
+              <Button type="button" variant="outline" className={styles.cls016} onClick={() => setShowReportForm(false)} disabled={reportSubmitting}>
                 Cancel
               </Button>
               <Button
                 type="button"
-                className="flex-1 h-11 bg-green-600 hover:bg-green-700"
+                className={styles.cls017}
                 onClick={handleSubmitReport}
                 disabled={reportSubmitting || !reportMessage.trim()}
               >
                 {reportSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={styles.cls018} />
                     Submitting...
                   </>
                 ) : (
@@ -513,79 +534,102 @@ export function MenuUpload() {
 
   if (showResults && detectedDishes) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 md:p-8 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className={styles.cls019}>
+        <div className={styles.cls020}>
+          <div className={styles.cls021}>
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Menu Analysis Results</h2>
-              <p className="text-sm md:text-base text-gray-600 mt-1">
-                Personalized safety analysis for <span className="font-semibold text-gray-800">{restaurantName}</span>
+              <h2 className={styles.cls003}>Menu Analysis Results</h2>
+              <p className={styles.cls022}>
+                Personalized safety analysis for <span className={styles.cls023}>{restaurantName}</span>
               </p>
             </div>
-            <Badge className="w-fit px-3 py-1.5 bg-gray-900 text-white hover:bg-gray-900">
+            <Badge className={styles.cls024}>
               {totalDishes} items analyzed
             </Badge>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border border-green-200 bg-green-50/70">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-green-700">Safe</span>
-              <Shield className="h-5 w-5 text-green-600" />
+        <div className={styles.cls025}>
+          <div className={styles.cls026}>
+            <div className={styles.cls027}>
+              <span className={styles.cls028}>Safe</span>
+              <Shield className={styles.cls029} />
             </div>
-            <div className="text-3xl font-bold text-green-700 mt-2">{safeDishes}</div>
+            <div className={styles.cls030}>{safeDishes}</div>
           </div>
-          <div className="p-4 rounded-xl border border-yellow-200 bg-yellow-50/70">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-yellow-700">Warning</span>
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
+          <div className={styles.cls031}>
+            <div className={styles.cls027}>
+              <span className={styles.cls032}>Warning</span>
+              <AlertCircle className={styles.cls033} />
             </div>
-            <div className="text-3xl font-bold text-yellow-700 mt-2">{warningDishes}</div>
+            <div className={styles.cls034}>{warningDishes}</div>
           </div>
-          <div className="p-4 rounded-xl border border-red-200 bg-red-50/70">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-red-700">Unsafe</span>
-              <Ban className="h-5 w-5 text-red-600" />
+          <div className={styles.cls035}>
+            <div className={styles.cls027}>
+              <span className={styles.cls036}>Unsafe</span>
+              <Ban className={styles.cls037} />
             </div>
-            <div className="text-3xl font-bold text-red-700 mt-2">{unsafeDishes}</div>
+            <div className={styles.cls038}>{unsafeDishes}</div>
           </div>
-          <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/70">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-700">Total</span>
-              <UtensilsCrossed className="h-5 w-5 text-blue-600" />
+          <div className={styles.cls039}>
+            <div className={styles.cls027}>
+              <span className={styles.cls040}>Total</span>
+              <UtensilsCrossed className={styles.cls041} />
             </div>
-            <div className="text-3xl font-bold text-blue-700 mt-2">{totalDishes}</div>
+            <div className={styles.cls042}>{totalDishes}</div>
           </div>
         </div>
 
-        <Card className="border-gray-200 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
+        <Card className={styles.cls043}>
+          <CardContent className={styles.cls044}>
+            <div className={styles.cls045}>
               <Shield className={`h-5 w-5 ${safePercentage >= 40 ? 'text-green-600' : 'text-red-600'}`} />
-              <span className="font-semibold text-gray-900">Safety Summary</span>
+              <span className={styles.cls046}>Safety Summary</span>
             </div>
             <p className={`text-sm md:text-base mb-4 ${safetyTone}`}>{safePercentage}% of menu items are safe for you</p>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div className={styles.cls047}>
               <div className={`${safetyBarColor} h-2.5 rounded-full transition-all duration-300`} style={{ width: `${safePercentage}%` }} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Menu Items Analysis</CardTitle>
+        {analysisSummary && (
+          <Card className={styles.cls089}>
+            <CardContent className={styles.cls090}>
+              <div className={styles.cls091}>
+                <div className={styles.cls092}>
+                  <Sparkles className={styles.cls093} />
+                </div>
+                <div>
+                  <p className={styles.cls094}>AI Recommendation Summary</p>
+                  <p className={styles.cls095}>{analysisSummary}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className={styles.cls043}>
+          <CardHeader className={styles.cls048}>
+            <div className={styles.cls096}>
+              <CardTitle className={styles.cls049}>Menu Items Analysis</CardTitle>
+              {totalDishes > RESULTS_PER_PAGE && (
+                <p className={styles.cls097}>
+                  Showing {currentStart}-{currentEnd} of {totalDishes}
+                </p>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {detectedDishes.map((dish, index) => (
+          <CardContent className={styles.cls050}>
+            {paginatedDishes.map((dish, index) => (
               <div
-                key={dish.id ?? index}
+                key={dish.id ?? `${currentResultsPage}-${index}`}
                 className={`p-5 rounded-xl border transition-all ${
                   dish.isSafe ? 'border-green-200 bg-green-50/40' : dish.hasWarning ? 'border-yellow-200 bg-yellow-50/40' : 'border-red-200 bg-red-50/40'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-semibold text-gray-900 text-lg leading-6">{dish.name}</h3>
+                <div className={styles.cls051}>
+                  <h3 className={styles.cls052}>{dish.name}</h3>
                   <Badge
                     className={
                       dish.isSafe
@@ -610,9 +654,9 @@ export function MenuUpload() {
                 )}
 
                 {dish.allergens.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Detected Ingredients</p>
-                    <div className="flex flex-wrap gap-2">
+                  <div className={styles.cls053}>
+                    <p className={styles.cls054}>Detected Ingredients</p>
+                    <div className={styles.cls055}>
                       {dish.allergens.map((allergen, aIndex) => (
                         <span
                           key={aIndex}
@@ -631,17 +675,46 @@ export function MenuUpload() {
                   </div>
                 )}
 
-                <Button type="button" variant="ghost" size="sm" className="mt-3 px-2 text-gray-600 hover:text-gray-900 hover:bg-white/70" onClick={() => handleReportIssue(dish)}>
-                  <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                <Button type="button" variant="ghost" size="sm" className={styles.cls056} onClick={() => handleReportIssue(dish)}>
+                  <AlertTriangle className={styles.cls057} />
                   Report incorrect detection
                 </Button>
               </div>
             ))}
           </CardContent>
+          {totalDishes > RESULTS_PER_PAGE && (
+            <div className={styles.cls098}>
+              <p className={styles.cls099}>
+                Page {currentResultsPage} of {totalResultPages}
+              </p>
+              <div className={styles.cls100}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={styles.cls101}
+                  onClick={() => setCurrentResultsPage((page) => Math.max(1, page - 1))}
+                  disabled={currentResultsPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={styles.cls101}
+                  onClick={() => setCurrentResultsPage((page) => Math.min(totalResultPages, page + 1))}
+                  disabled={currentResultsPage === totalResultPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
 
-        <div className="flex gap-3">
-          <Button type="button" variant="outline" className="flex-1" onClick={handleReset}>
+        <div className={styles.cls015}>
+          <Button type="button" variant="outline" className={styles.cls058} onClick={handleReset}>
             Scan Another Menu
           </Button>
         </div>
@@ -650,23 +723,23 @@ export function MenuUpload() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 md:p-8 shadow-sm text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Upload & Analyze Menu</h2>
-        <p className="text-sm md:text-base text-gray-600 mt-2">Upload a menu photo or PDF and get personalized safety results instantly.</p>
+    <div className={styles.cls059}>
+      <div className={styles.cls060}>
+        <h2 className={styles.cls003}>Upload & Analyze Menu</h2>
+        <p className={styles.cls061}>Upload a menu photo or PDF and get personalized safety results instantly.</p>
       </div>
 
-      <Card className="border-gray-200 shadow-sm">
-        <CardContent className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Restaurant Name</label>
-            <Input placeholder="Enter restaurant name" value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} className="w-full h-11" />
+      <Card className={styles.cls043}>
+        <CardContent className={styles.cls062}>
+          <div className={styles.cls063}>
+            <label className={styles.cls064}>Restaurant Name</label>
+            <Input placeholder="Enter restaurant name" value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} className={styles.cls065} />
           </div>
 
-          <div className="space-y-4">
+          <div className={styles.cls066}>
             {/* IMPORTANT: Dropzone opens normal file chooser (more stable) */}
             <div
-              className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:border-green-500 hover:bg-green-50/40 transition-colors"
+              className={styles.cls067}
               onClick={() => fileInputRef.current?.click()}
               role="button"
               tabIndex={0}
@@ -674,39 +747,39 @@ export function MenuUpload() {
                 if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
               }}
             >
-              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                <Upload className="h-6 w-6 text-gray-500" />
+              <div className={styles.cls068}>
+                <Upload className={styles.cls069} />
               </div>
-              <p className="text-sm font-semibold text-gray-800 mb-1">Upload Menu</p>
-              <p className="text-xs text-gray-500">{isTouchDevice ? 'Tap to choose file (camera button below)' : 'Click to browse or drag & drop'}</p>
-              <p className="text-xs text-gray-500 mt-1">Accepted: PNG, JPG, PDF (max 10MB)</p>
+              <p className={styles.cls070}>Upload Menu</p>
+              <p className={styles.cls071}>{isTouchDevice ? 'Tap to choose file (camera button below)' : 'Click to browse or drag & drop'}</p>
+              <p className={styles.cls011}>Accepted: PNG, JPG, PDF (max 10MB)</p>
             </div>
 
-            <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleFileUpload} className={styles.cls072} />
 
             {isTouchDevice && (
               <>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
+                <div className={styles.cls073}>
+                  <div className={styles.cls074}>
+                    <div className={styles.cls075} />
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">or</span>
+                  <div className={styles.cls076}>
+                    <span className={styles.cls077}>or</span>
                   </div>
                 </div>
 
                 {/* Camera is explicit button */}
-                <Button type="button" variant="outline" className="w-full h-14 flex-col gap-2" onClick={() => cameraInputRef.current?.click()}>
-                  <Camera className="h-6 w-6" />
-                  <span className="text-sm">Take Photo</span>
+                <Button type="button" variant="outline" className={styles.cls078} onClick={() => cameraInputRef.current?.click()}>
+                  <Camera className={styles.cls079} />
+                  <span className={styles.cls080}>Take Photo</span>
                 </Button>
 
-                <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="h-4 w-4 mr-2" />
+                <Button type="button" variant="outline" className={styles.cls081} onClick={() => fileInputRef.current?.click()}>
+                  <Upload className={styles.cls082} />
                   Choose File / PDF
                 </Button>
 
-                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className={styles.cls072} />
               </>
             )}
           </div>
@@ -718,15 +791,15 @@ export function MenuUpload() {
           )}
 
           {uploadedFile && (
-            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-              <div className="flex items-center gap-3">
-                <FileImage className="h-5 w-5 text-green-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-green-800">{uploadedFile.name}</p>
-                  <p className="text-xs text-green-600">{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+            <div className={styles.cls083}>
+              <div className={styles.cls084}>
+                <FileImage className={styles.cls029} />
+                <div className={styles.cls058}>
+                  <p className={styles.cls085}>{uploadedFile.name}</p>
+                  <p className={styles.cls086}>{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 <Button type="button" variant="ghost" size="sm" onClick={handleReset}>
-                  <X className="h-4 w-4" />
+                  <X className={styles.cls087} />
                 </Button>
               </div>
             </div>
@@ -736,16 +809,16 @@ export function MenuUpload() {
             type="button"
             onClick={handleScanMenu}
             disabled={!uploadedFile || isProcessing || !restaurantName.trim()}
-            className="w-full bg-green-700 hover:bg-green-800 h-12 text-base"
+            className={styles.cls088}
           >
             {isProcessing ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={styles.cls018} />
                 Analyzing Menu...
               </>
             ) : (
               <>
-                <UtensilsCrossed className="h-4 w-4 mr-2" />
+                <UtensilsCrossed className={styles.cls082} />
                 Analyze Menu
               </>
             )}
@@ -755,3 +828,4 @@ export function MenuUpload() {
     </div>
   );
 }
+

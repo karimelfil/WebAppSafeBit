@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -12,7 +12,7 @@ import {
 } from '../ui/dialog';
 import { Search, Eye, CheckCircle, AlertTriangle, Calendar, MapPin } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
-
+import { styles } from '../../styles/user/ScanHistory.styles.js';
 const mockHistory = [
   {
     id: 'SCAN001',
@@ -110,71 +110,71 @@ export function ScanHistory() {
   const userAllergies = ['Peanuts', 'Shellfish'];
 
   return (
-    <div className="space-y-6">
+    <div className={styles.cls001}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={styles.cls002}>
         <div>
           <h2>Scan History</h2>
-          <p className="text-sm text-gray-600">Review your past menu scans and results</p>
+          <p className={styles.cls003}>Review your past menu scans and results</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className={styles.cls004}>
+          <Search className={styles.cls005} />
           <Input
             placeholder="Search history..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className={styles.cls006}
           />
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Total Scans</p>
-          <p className="text-gray-900 mt-1">{history.length}</p>
+      <div className={styles.cls007}>
+        <div className={styles.cls008}>
+          <p className={styles.cls003}>Total Scans</p>
+          <p className={styles.cls009}>{history.length}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Safe Dishes Found</p>
-          <p className="text-green-600 mt-1">
+        <div className={styles.cls008}>
+          <p className={styles.cls003}>Safe Dishes Found</p>
+          <p className={styles.cls010}>
             {history.reduce((acc, scan) => acc + scan.dishes.filter(d => d.isSafe).length, 0)}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Warnings Issued</p>
-          <p className="text-red-600 mt-1">
+        <div className={styles.cls008}>
+          <p className={styles.cls003}>Warnings Issued</p>
+          <p className={styles.cls011}>
             {history.reduce((acc, scan) => acc + scan.dishes.filter(d => !d.isSafe).length, 0)}
           </p>
         </div>
       </div>
 
       {/* History List */}
-      <div className="space-y-4">
+      <div className={styles.cls012}>
         {filteredHistory.map(record => {
           const safeDishes = record.dishes.filter(d => d.isSafe).length;
           const totalDishes = record.dishes.length;
           const hasWarnings = record.dishes.some(d => !d.isSafe);
 
           return (
-            <Card key={record.id} className="border-0">
+            <Card key={record.id} className={styles.cls013}>
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
+                <div className={styles.cls014}>
+                  <div className={styles.cls015}>
+                    <CardTitle className={styles.cls016}>
                       {record.restaurant}
                       {hasWarnings ? (
-                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <AlertTriangle className={styles.cls017} />
                       ) : (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircle className={styles.cls018} />
                       )}
                     </CardTitle>
-                    <CardDescription className="flex flex-col gap-1 mt-2">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
+                    <CardDescription className={styles.cls019}>
+                      <span className={styles.cls016}>
+                        <MapPin className={styles.cls020} />
                         {record.location}
                       </span>
-                      <span className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3" />
+                      <span className={styles.cls016}>
+                        <Calendar className={styles.cls020} />
                         {new Date(record.scannedAt).toLocaleString()}
                       </span>
                     </CardDescription>
@@ -184,27 +184,27 @@ export function ScanHistory() {
                     variant="ghost"
                     onClick={() => handleViewScan(record)}
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className={styles.cls021} />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-600">
+                <div className={styles.cls022}>
+                  <div className={styles.cls023}>
+                    <span className={styles.cls024}>
                       {totalDishes} {totalDishes === 1 ? 'dish' : 'dishes'} scanned
                     </span>
-                    <span className="text-green-600">
+                    <span className={styles.cls025}>
                       {safeDishes} safe
                     </span>
                     {hasWarnings && (
-                      <span className="text-red-600">
+                      <span className={styles.cls026}>
                         {totalDishes - safeDishes} with warnings
                       </span>
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className={styles.cls027}>
                     {record.dishes.map((dish, index) => (
                       <div
                         key={index}
@@ -214,30 +214,30 @@ export function ScanHistory() {
                             : 'bg-red-50'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className={styles.cls028}>
+                          <div className={styles.cls016}>
                             {dish.isSafe ? (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <CheckCircle className={styles.cls029} />
                             ) : (
-                              <AlertTriangle className="h-4 w-4 text-red-600" />
+                              <AlertTriangle className={styles.cls030} />
                             )}
-                            <span className="text-sm">{dish.name}</span>
+                            <span className={styles.cls031}>{dish.name}</span>
                           </div>
-                          <div className="flex flex-wrap gap-1 justify-end">
+                          <div className={styles.cls032}>
                             {dish.allergens.slice(0, 2).map((allergen, aIndex) => {
                               const matchesUserAllergy = userAllergies.includes(allergen);
                               return (
                                 <Badge
                                   key={aIndex}
                                   variant={matchesUserAllergy ? 'destructive' : 'secondary'}
-                                  className="text-xs"
+                                  className={styles.cls033}
                                 >
                                   {allergen}
                                 </Badge>
                               );
                             })}
                             {dish.allergens.length > 2 && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className={styles.cls033}>
                                 +{dish.allergens.length - 2}
                               </Badge>
                             )}
@@ -255,7 +255,7 @@ export function ScanHistory() {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className={styles.cls034}>
           <DialogHeader>
             <DialogTitle>Scan Details</DialogTitle>
             <DialogDescription>
@@ -263,27 +263,27 @@ export function ScanHistory() {
             </DialogDescription>
           </DialogHeader>
           {selectedScan && (
-            <div className="space-y-6 py-4">
+            <div className={styles.cls035}>
               {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className={styles.cls036}>
                 <div>
-                  <p className="text-sm text-gray-600">Restaurant</p>
-                  <p className="text-sm mt-1">{selectedScan.restaurant}</p>
+                  <p className={styles.cls003}>Restaurant</p>
+                  <p className={styles.cls037}>{selectedScan.restaurant}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="text-sm mt-1">{selectedScan.location}</p>
+                  <p className={styles.cls003}>Location</p>
+                  <p className={styles.cls037}>{selectedScan.location}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-600">Scanned At</p>
-                  <p className="text-sm mt-1">{new Date(selectedScan.scannedAt).toLocaleString()}</p>
+                <div className={styles.cls038}>
+                  <p className={styles.cls003}>Scanned At</p>
+                  <p className={styles.cls037}>{new Date(selectedScan.scannedAt).toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Dishes */}
               <div>
-                <p className="text-sm text-gray-600 mb-3">Scanned Dishes</p>
-                <div className="space-y-4">
+                <p className={styles.cls039}>Scanned Dishes</p>
+                <div className={styles.cls012}>
                   {selectedScan.dishes.map((dish, index) => (
                     <div
                       key={index}
@@ -293,11 +293,11 @@ export function ScanHistory() {
                           : 'bg-red-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className={styles.cls040}>
                         {dish.isSafe ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <CheckCircle className={styles.cls018} />
                         ) : (
-                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                          <AlertTriangle className={styles.cls017} />
                         )}
                         <h3 className={dish.isSafe ? 'text-green-900' : 'text-red-900'}>
                           {dish.name}
@@ -305,19 +305,19 @@ export function ScanHistory() {
                       </div>
 
                       {!dish.isSafe && (
-                        <Alert className="bg-red-100 border-red-300 mb-3">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <AlertDescription className="text-red-800 text-sm">
+                        <Alert className={styles.cls041}>
+                          <AlertTriangle className={styles.cls030} />
+                          <AlertDescription className={styles.cls042}>
                             This dish contains allergens that match your profile
                           </AlertDescription>
                         </Alert>
                       )}
 
-                      <div className="mb-3">
-                        <p className="text-sm text-gray-700 mb-2">Ingredients:</p>
-                        <div className="flex flex-wrap gap-2">
+                      <div className={styles.cls043}>
+                        <p className={styles.cls044}>Ingredients:</p>
+                        <div className={styles.cls045}>
                           {dish.ingredients.map((ingredient, iIndex) => (
-                            <Badge key={iIndex} variant="secondary" className="text-xs">
+                            <Badge key={iIndex} variant="secondary" className={styles.cls033}>
                               {ingredient}
                             </Badge>
                           ))}
@@ -326,18 +326,18 @@ export function ScanHistory() {
 
                       {dish.allergens.length > 0 && (
                         <div>
-                          <p className="text-sm text-gray-700 mb-2">Allergens:</p>
-                          <div className="flex flex-wrap gap-2">
+                          <p className={styles.cls044}>Allergens:</p>
+                          <div className={styles.cls045}>
                             {dish.allergens.map((allergen, aIndex) => {
                               const matchesUserAllergy = userAllergies.includes(allergen);
                               return (
                                 <Badge
                                   key={aIndex}
                                   variant={matchesUserAllergy ? 'destructive' : 'secondary'}
-                                  className="text-xs"
+                                  className={styles.cls033}
                                 >
                                   {allergen}
-                                  {matchesUserAllergy && ' ⚠️'}
+                                  {matchesUserAllergy && ' âš ï¸'}
                                 </Badge>
                               );
                             })}
@@ -355,3 +355,5 @@ export function ScanHistory() {
     </div>
   );
 }
+
+

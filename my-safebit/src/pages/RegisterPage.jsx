@@ -19,10 +19,10 @@ import { getAllAllergies, getAllDiseases, registerApi } from "../services/regist
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PHONE_REGEX = /^[0-9+\-() \s]{0,20}$/;
-
+//trim strings or return null if empty
 const trimOrNull = (v) => (typeof v === "string" ? v.trim() : v) || null;
 
-
+// Mapping server error fields to client field names for  error 
 const mapServerFieldToClient = (serverKey) => {
   const key = (serverKey || "").toLowerCase();
   if (key.startsWith("firstname")) return "firstName";
@@ -39,6 +39,7 @@ const mapServerFieldToClient = (serverKey) => {
   return null;
 };
 
+// merge multiple error messages for the same field
 const mergeFieldErrors = (base, field, message) => {
   if (!field) return base;
   return {
@@ -47,17 +48,19 @@ const mergeFieldErrors = (base, field, message) => {
   };
 };
 
-
+// parse API errors 
 const parseApiError = (err) => {
   let summary = "Something went wrong. Please check your inputs.";
   let fieldErrors = {};
 
+  // If it's not an Axios error or doesn't have a response return an  error message
   if (!axios.isAxiosError(err) || !err.response) {
     return { summary, fieldErrors };
   }
 
-  const data = err.response.data;
+  const data = err.response.data; // Get the response data from the error object
 
+  
   if (typeof data === "string") {
     summary = data;
 
@@ -124,11 +127,11 @@ export function RegisterPage({ onNavigateToLogin }) {
   const [formError, setFormError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [loadingMeta, setLoadingMeta] = useState(true);// State to manage loading of allergies and diseases
 
   useEffect(() => {
     let cancelled = false;
-
+// Load allergies and diseases for the health information step when the component mounts
     async function loadMeta() {
       setLoadingMeta(true);
       try {
@@ -151,6 +154,7 @@ export function RegisterPage({ onNavigateToLogin }) {
     };
   }, []);
 
+  // Client side validation for the personal information step
   const clientValidatePersonal = useMemo(() => {
     return () => {
       const fe = {};
@@ -208,6 +212,7 @@ export function RegisterPage({ onNavigateToLogin }) {
     };
   }, [firstName, lastName, email, phone, dob, gender, password, confirmPassword]);
 
+  // Clear field error when user modifies the input
   const clearFieldError = (field) => {
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -216,6 +221,7 @@ export function RegisterPage({ onNavigateToLogin }) {
     });
   };
 
+//toggle id in selected allergies and diseases
   const toggleId = (id, checked, setter) => {
     const isChecked = !!checked;
     const numId = typeof id === "string" && !Number.isNaN(Number(id)) ? Number(id) : id;
@@ -372,7 +378,7 @@ export function RegisterPage({ onNavigateToLogin }) {
                   onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
                   className={inputErrorClass("email")}
                 />
-                {helpText("email")}
+                {helpText("email")} 
               </div>
 
               <div className="space-y-2">

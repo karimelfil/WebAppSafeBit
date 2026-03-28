@@ -7,14 +7,22 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
+//check if the session auth is active by checking sessionStorage
+function hasActiveAuthSession() {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem("sb_session_active") === "1";
+}
+
+// if the user is not authenticated or does not have the required role  redirect to login page
 function ProtectedRoute({ children, allowedRoles }) {
   const token = localStorage.getItem("sb_token");
   const role = (localStorage.getItem("sb_role") || "").toLowerCase();
+  const isSessionActive = hasActiveAuthSession();
 
-  if (!token) return <Navigate to="/" replace />;
+  if (!token || !role || !isSessionActive) return <Navigate to="/" replace />;
 
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -22,14 +30,17 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 export default function App() {
   const navigate = useNavigate();
+  // Prevents the app from rendering routes before checking authentication.
   const [bootstrapped, setBootstrapped] = useState(false);
 
+  // On app load  check if there is  an active session and navigate 
   useEffect(() => {
     const token = localStorage.getItem("sb_token");
     const role = (localStorage.getItem("sb_role") || "").toLowerCase();
+    const isSessionActive = hasActiveAuthSession();
 
     if (window.location.pathname === "/") {
-      if (token && role) {
+      if (token && role && isSessionActive) {
         if (role === "admin") navigate("/admin", { replace: true });
         else navigate("/dashboard", { replace: true });
       }
@@ -38,6 +49,7 @@ export default function App() {
     setBootstrapped(true);
   }, [navigate]);
 
+  
   if (!bootstrapped) return null;
 
   return (

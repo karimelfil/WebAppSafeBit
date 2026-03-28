@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
+import { styles } from '../styles/admin/DishesManagement.styles.js';
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import {
@@ -147,87 +147,87 @@ export function DishesManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={styles.cls001}>
+      <div className={styles.cls002}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Dishes & Ingredients Management</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className={styles.cls003}>Dishes & Ingredients Management</h2>
+          <p className={styles.cls004}>
             Comprehensive overview of all uploaded dishes and ingredient analysis
           </p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className={styles.cls005}>
+          <Search className={styles.cls006} />
           <Input
             placeholder="Search dishes, restaurants, or users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className={styles.cls007}
           />
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className={styles.cls008}>
+        <div className={styles.cls009}>
           <div>
-            <p className="text-sm font-medium text-blue-700 mb-1">Total Dishes Analyzed</p>
-            <p className="text-3xl font-bold text-blue-900">{dishes.length}</p>
-            <p className="text-xs text-blue-600 mt-2">All uploaded dishes in the system</p>
+            <p className={styles.cls010}>Total Dishes Analyzed</p>
+            <p className={styles.cls011}>{dishes.length}</p>
+            <p className={styles.cls012}>All uploaded dishes in the system</p>
           </div>
-          <div className="p-3 bg-blue-600 rounded-xl">
-            <ChefHat className="h-6 w-6 text-white" />
+          <div className={styles.cls013}>
+            <ChefHat className={styles.cls014} />
           </div>
         </div>
       </div>
 
       {listError && (
-        <Alert className="bg-red-50 border-red-200">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-700">{listError}</AlertDescription>
+        <Alert className={styles.cls015}>
+          <AlertTriangle className={styles.cls016} />
+          <AlertDescription className={styles.cls017}>{listError}</AlertDescription>
         </Alert>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className={styles.cls018}>
+        <div className={styles.cls019}>
           <Table>
-            <TableHeader className="bg-gray-50">
+            <TableHeader className={styles.cls020}>
               <TableRow>
-                <TableHead className="font-semibold text-gray-900">Dish ID</TableHead>
-                <TableHead className="font-semibold text-gray-900">Dish Name</TableHead>
-                <TableHead className="font-semibold text-gray-900">Restaurant</TableHead>
-                <TableHead className="font-semibold text-gray-900">Upload Date</TableHead>
-                <TableHead className="text-right font-semibold text-gray-900">Actions</TableHead>
+                <TableHead className={styles.cls021}>Dish ID</TableHead>
+                <TableHead className={styles.cls021}>Dish Name</TableHead>
+                <TableHead className={styles.cls021}>Restaurant</TableHead>
+                <TableHead className={styles.cls021}>Upload Date</TableHead>
+                <TableHead className={styles.cls022}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={5}>
-                    <div className="py-6 text-sm text-gray-500">Loading dishes...</div>
+                    <div className={styles.cls023}>Loading dishes...</div>
                   </TableCell>
                 </TableRow>
               ) : paginatedDishes.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5}>
-                    <div className="py-6 text-sm text-gray-500">No dishes found.</div>
+                    <div className={styles.cls023}>No dishes found.</div>
                   </TableCell>
                 </TableRow>
               ) : (
                 paginatedDishes.map((dish) => (
-                  <TableRow key={dish.id} className="hover:bg-gray-50 transition-colors">
-                    <TableCell className="font-medium text-gray-900">{dish.id}</TableCell>
-                    <TableCell className="font-medium text-gray-900">{dish.name}</TableCell>
-                    <TableCell className="text-gray-700">{dish.restaurant || "-"}</TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                  <TableRow key={dish.id} className={styles.cls024}>
+                    <TableCell className={styles.cls025}>{dish.id}</TableCell>
+                    <TableCell className={styles.cls025}>{dish.name}</TableCell>
+                    <TableCell className={styles.cls026}>{dish.restaurant || "-"}</TableCell>
+                    <TableCell className={styles.cls027}>
                       {formatDateTime(dish.uploadedAt)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className={styles.cls028}>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleViewDish(dish)}
-                        className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        className={styles.cls029}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className={styles.cls030} />
                         View
                       </Button>
                     </TableCell>
@@ -239,11 +239,11 @@ export function DishesManagement() {
         </div>
 
         {!loading && filteredDishes.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <p className="text-sm text-gray-600">
+          <div className={styles.cls031}>
+            <p className={styles.cls027}>
               Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filteredDishes.length)} of {filteredDishes.length}
             </p>
-            <div className="flex items-center gap-2">
+            <div className={styles.cls032}>
               <Button
                 size="sm"
                 variant="outline"
@@ -252,7 +252,7 @@ export function DishesManagement() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-700">
+              <span className={styles.cls033}>
                 Page {page} of {totalPages}
               </span>
               <Button
@@ -269,62 +269,62 @@ export function DishesManagement() {
       </div>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-xl bg-white text-gray-900 border border-gray-200">
+        <DialogContent className={styles.cls034}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UtensilsCrossed className="h-6 w-6 text-green-600" />
+            <DialogTitle className={styles.cls035}>
+              <div className={styles.cls036}>
+                <UtensilsCrossed className={styles.cls037} />
               </div>
               <div>
-                <div className="font-bold text-gray-900">{selectedDish?.name || "Dish Details"}</div>
-                <div className="text-sm font-normal text-gray-600">{selectedDish?.restaurant || "-"}</div>
+                <div className={styles.cls038}>{selectedDish?.name || "Dish Details"}</div>
+                <div className={styles.cls039}>{selectedDish?.restaurant || "-"}</div>
               </div>
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className={styles.cls040}>
               Complete ingredient analysis and detailed information
             </DialogDescription>
           </DialogHeader>
 
           {actionError && (
-            <Alert className="bg-red-50 border-red-200">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">{actionError}</AlertDescription>
+            <Alert className={styles.cls015}>
+              <AlertTriangle className={styles.cls016} />
+              <AlertDescription className={styles.cls017}>{actionError}</AlertDescription>
             </Alert>
           )}
 
           {selectedDish && (
-            <div className="space-y-5 py-3">
+            <div className={styles.cls041}>
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-3">Dish Information</p>
-                <div className="space-y-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <div className="grid grid-cols-[120px_1fr] gap-4">
-                    <span className="text-gray-600">Dish ID:</span>
-                    <span className="font-medium text-gray-900">{selectedDish.id}</span>
+                <p className={styles.cls042}>Dish Information</p>
+                <div className={styles.cls043}>
+                  <div className={styles.cls044}>
+                    <span className={styles.cls040}>Dish ID:</span>
+                    <span className={styles.cls025}>{selectedDish.id}</span>
                   </div>
-                  <div className="grid grid-cols-[120px_1fr] gap-4">
-                    <span className="text-gray-600">Upload Date:</span>
-                    <span className="font-medium text-gray-900">{formatDateTime(selectedDish.uploadedAt)}</span>
+                  <div className={styles.cls044}>
+                    <span className={styles.cls040}>Upload Date:</span>
+                    <span className={styles.cls025}>{formatDateTime(selectedDish.uploadedAt)}</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-3">Detected Ingredients</p>
+                <p className={styles.cls042}>Detected Ingredients</p>
                 {ingredientsLoading ? (
-                  <div className="text-sm text-gray-500">Loading ingredients...</div>
+                  <div className={styles.cls045}>Loading ingredients...</div>
                 ) : selectedDish.ingredients?.length ? (
-                  <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
+                  <div className={styles.cls046}>
                     {selectedDish.ingredients.map((ingredient, idx) => (
                       <div
                         key={`${ingredient}-${idx}`}
-                        className="inline-flex items-center px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-800"
+                        className={styles.cls047}
                       >
                         {ingredient}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-500">No ingredients found for this dish.</div>
+                  <div className={styles.cls045}>No ingredients found for this dish.</div>
                 )}
               </div>
             </div>
@@ -334,4 +334,6 @@ export function DishesManagement() {
     </div>
   );
 }
+
+
 

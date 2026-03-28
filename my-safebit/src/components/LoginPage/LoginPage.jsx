@@ -13,14 +13,20 @@ import { useNavigate } from "react-router-dom";
 export function LoginPage({ onLogin, onNavigateToRegister }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // State to manage the forgot password 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  // State to manage the reset password email submission
   const [resetSent, setResetSent] = useState(false);
 
+  // State to manage form submission 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  //  navigation to other pages  register and forgot password
 const navigate = useNavigate();
 
+// Function to handle login form submission
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -43,13 +49,17 @@ const navigate = useNavigate();
 
     setSubmitting(true);
 
+    // Call the login API and handle the response
     try {
       const res = await loginApi({ email, password });
 
+      // Store the token and user info in localStorage and sessionStorage
       localStorage.setItem('sb_token', res.token);
       localStorage.setItem('sb_role', res.role);
       localStorage.setItem('sb_userId', String(res.userId));
+      sessionStorage.setItem('sb_session_active', '1');
 
+      // Determine the role and call onLogin with the appropriate value
       const roleLower = (res.role || '').toLowerCase();
       onLogin(roleLower === 'admin' ? 'admin' : 'user');
     } catch (err) {
@@ -69,6 +79,7 @@ const navigate = useNavigate();
     }
   };
 
+  // Function to handle forgot password form submission
   const handleForgotPassword = (e) => {
     e.preventDefault();
     setResetSent(true);
@@ -93,6 +104,7 @@ const navigate = useNavigate();
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
+          {/* Show success message if reset link is sent */}
             {resetSent ? (
               <Alert className="bg-green-50 border-green-200">
                 <AlertDescription className="text-green-800">
@@ -100,6 +112,7 @@ const navigate = useNavigate();
                 </AlertDescription>
               </Alert>
             ) : (
+              
               <form onSubmit={handleForgotPassword} noValidate className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email Address</Label>
