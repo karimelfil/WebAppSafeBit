@@ -12,7 +12,7 @@ import {
 import { Search, Eye, CheckCircle, AlertTriangle, Calendar, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { styles } from '../../styles/user/ScanHistory.styles.js';
-import { getScanHistory } from '../../services/scanHistoryService';
+import { getScanDetails, getScanHistory } from '../../services/scanHistoryService';
 export function ScanHistory() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +20,8 @@ export function ScanHistory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedScan, setSelectedScan] = useState(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
 
   useEffect(() => {
     const fetchScanHistory = async () => {
@@ -43,9 +45,26 @@ export function ScanHistory() {
     String(record?.RestaurantName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleViewScan = (scan) => {
-    setSelectedScan(scan);
+  const handleViewScan = async (scan) => {
     setShowDetailsDialog(true);
+    setSelectedScan(scan);
+    setDetailsError(null);
+    setDetailsLoading(true);
+
+    try {
+      const details = await getScanDetails(scan.ScanID);
+      setSelectedScan({
+        ...scan,
+        ...details,
+        SafeCount: scan.SafeCount,
+        UnsafeCount: scan.UnsafeCount,
+        RiskyCount: scan.RiskyCount,
+      });
+    } catch (err) {
+      setDetailsError(err?.message || 'Failed to load scan details.');
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   return (
@@ -200,6 +219,18 @@ export function ScanHistory() {
               Summary information about this menu scan
             </DialogDescription>
           </DialogHeader>
+          {detailsLoading && (
+            <div className="flex items-center gap-2 py-4">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading scan details...</span>
+            </div>
+          )}
+          {detailsError && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{detailsError}</AlertDescription>
+            </Alert>
+          )}
           {selectedScan && (
             <div className={styles.cls035}>
               {/* Basic Info */}
@@ -242,6 +273,22 @@ export function ScanHistory() {
                   )}
                 </div>
               </div>
+              {Array.isArray(selectedScan.Dishes) && selectedScan.Dishes.length > 0 && (
+                <div>
+                  <p className={styles.cls039}>Detected Dishes</p>
+                  <div className={styles.cls012}>
+                    {selectedScan.Dishes.map((dish) => (
+                      <div key={dish.DishID} className="p-4 rounded-lg border bg-white">
+                        <p className={styles.cls037}>{dish.DishName}</p>
+                        <p className={styles.cls003}>{dish.SafetyStatus}</p>
+                        {dish.Ingredients.length > 0 && (
+                          <p className={styles.cls003}>{dish.Ingredients.join(', ')}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

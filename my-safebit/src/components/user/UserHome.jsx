@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Upload,
   History,
@@ -10,11 +10,11 @@ import {
   User,
   LogOut,
 } from "lucide-react";
-import { styles } from '../../styles/user/UserHome.styles.js';
+import { styles } from "../../styles/user/UserHome.styles.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
-
+import { getScanHistory } from "../../services/scanHistoryService";
 
 export default function UserDashboardPage({ onNavigate, activePage = "home" }) {
   return (
@@ -69,7 +69,6 @@ function UserSidebar({ active = "home", onNavigate }) {
         </div>
       </div>
 
-
       <nav className={styles.cls015}>
         {nav.map((item) => {
           const Icon = item.icon;
@@ -94,7 +93,6 @@ function UserSidebar({ active = "home", onNavigate }) {
         })}
       </nav>
 
-
       <div className={styles.cls017}>
         <button
           onClick={() => onNavigate?.("logout")}
@@ -109,18 +107,35 @@ function UserSidebar({ active = "home", onNavigate }) {
 }
 
 export function UserHome({ onNavigate }) {
-  const recentScans = [
-    { dish: "Caesar Salad", restaurant: "Italian Bistro", status: "safe", date: "2 hours ago" },
-    { dish: "Pad Thai", restaurant: "Thai Kitchen", status: "unsafe", date: "Yesterday" },
-    { dish: "Margherita Pizza", restaurant: "Pizza Palace", status: "safe", date: "2 days ago" },
-  ];
+  const [recentScans, setRecentScans] = useState([]);
+  const [recentScansError, setRecentScansError] = useState(null);
 
   const userAllergies = ["Peanuts", "Shellfish"];
   const userDiseases = ["Diabetes", "Celiac Disease"];
 
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const history = await getScanHistory();
+        if (cancelled) return;
+        setRecentScans(Array.isArray(history) ? history.slice(0, 3) : []);
+        setRecentScansError(null);
+      } catch (error) {
+        if (cancelled) return;
+        setRecentScans([]);
+        setRecentScansError(error?.message || "Failed to load recent scans.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className={styles.cls020}>
-
       <div className={styles.cls021}>
         <div className={styles.cls022}>
           <div className={styles.cls023} />
@@ -138,7 +153,6 @@ export function UserHome({ onNavigate }) {
             meal recommendations.
           </p>
 
-
           <Button
             onClick={() => onNavigate?.("upload")}
             variant="ghost"
@@ -149,7 +163,6 @@ export function UserHome({ onNavigate }) {
           </Button>
         </div>
       </div>
-
 
       {(userAllergies.length > 0 || userDiseases.length > 0) && (
         <Alert className={styles.cls032}>
@@ -169,7 +182,7 @@ export function UserHome({ onNavigate }) {
                 </p>
               )}
               <p className={styles.cls038}>
-                We'll warn you about dishes containing these allergens or that may not be suitable for
+                We&apos;ll warn you about dishes containing these allergens or that may not be suitable for
                 your conditions.
               </p>
             </div>
@@ -253,37 +266,56 @@ export function UserHome({ onNavigate }) {
 
         <CardContent>
           <div className={styles.cls055}>
-            {recentScans.map((scan, index) => (
-              <div
-                key={index}
-                className={styles.cls056}
-              >
+            {recentScansError && (
+              <Alert>
+                <AlertDescription>{recentScansError}</AlertDescription>
+              </Alert>
+            )}
+            {!recentScansError && recentScans.length === 0 && (
+              <div className={styles.cls056}>
                 <div className={styles.cls002}>
-                  <p className={styles.cls057}>{scan.dish}</p>
-                  <p className={styles.cls045}>{scan.restaurant}</p>
-                </div>
-
-                <div className={styles.cls058}>
-                  <span className={styles.cls059}>{scan.date}</span>
-
-                  {scan.status === "safe" ? (
-                    <div className={styles.cls060}>
-                      <CheckCircle className={styles.cls019} />
-                      <span className={styles.cls061}>Safe</span>
-                    </div>
-                  ) : (
-                    <div className={styles.cls062}>
-                      <AlertTriangle className={styles.cls019} />
-                      <span className={styles.cls061}>Warning</span>
-                    </div>
-                  )}
+                  <p className={styles.cls057}>No scans yet</p>
+                  <p className={styles.cls045}>Your latest scans will appear here</p>
                 </div>
               </div>
-            ))}
+            )}
+            {recentScans.map((scan) => {
+              const totalDishes = scan.SafeCount + scan.UnsafeCount + scan.RiskyCount;
+              const hasWarnings = scan.UnsafeCount > 0 || scan.RiskyCount > 0;
+
+              return (
+                <div
+                  key={scan.ScanID}
+                  className={styles.cls056}
+                >
+                  <div className={styles.cls002}>
+                    <p className={styles.cls057}>{scan.RestaurantName}</p>
+                    <p className={styles.cls045}>
+                      {totalDishes} {totalDishes === 1 ? "dish" : "dishes"} scanned
+                    </p>
+                  </div>
+
+                  <div className={styles.cls058}>
+                    <span className={styles.cls059}>{new Date(scan.ScanDate).toLocaleString()}</span>
+
+                    {hasWarnings ? (
+                      <div className={styles.cls062}>
+                        <AlertTriangle className={styles.cls019} />
+                        <span className={styles.cls061}>Warning</span>
+                      </div>
+                    ) : (
+                      <div className={styles.cls060}>
+                        <CheckCircle className={styles.cls019} />
+                        <span className={styles.cls061}>Safe</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
-
 
       <Card className={styles.cls063}>
         <CardHeader>
@@ -318,4 +350,3 @@ export function UserHome({ onNavigate }) {
     </div>
   );
 }
-

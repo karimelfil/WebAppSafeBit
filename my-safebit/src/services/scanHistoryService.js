@@ -14,6 +14,12 @@ const pickFirst = (obj, keys, fallback = null) => {
   return fallback;
 };
 
+const extractList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  const nested = pickFirst(payload, ["history", "scanHistory", "data", "items", "results"], []);
+  return Array.isArray(nested) ? nested : [];
+};
+
 const normalizeHistoryRecord = (record, index) => ({
   ScanID: pickFirst(record, ["ScanID", "scanID", "scanId", "id", "Id"], index + 1),
   RestaurantName: String(
@@ -27,47 +33,55 @@ const normalizeHistoryRecord = (record, index) => ({
   RiskyCount: toNumber(pickFirst(record, ["RiskyCount", "riskyCount", "warningCount", "warnings", "Warnings"])),
 });
 
-const extractHistoryList = (payload) => {
-  if (Array.isArray(payload)) return payload;
+const normalizeDish = (dish, index) => ({
+  DishID: pickFirst(dish, ["DishID", "dishID", "dishId", "id", "Id"], index + 1),
+  DishName: String(pickFirst(dish, ["DishName", "dishName", "name", "Name"], `Dish ${index + 1}`)),
+  SafetyStatus: String(
+    pickFirst(dish, ["SafetyStatus", "safetyStatus", "status", "Status"], "UNKNOWN")
+  ).toUpperCase(),
+  Ingredients: Array.isArray(pickFirst(dish, ["Ingredients", "ingredients"], []))
+    ? pickFirst(dish, ["Ingredients", "ingredients"], [])
+    : [],
+});
 
-  const nested = pickFirst(payload, ["history", "scanHistory", "data", "items", "results"], []);
-  if (Array.isArray(nested)) return nested;
+const normalizeDetails = (payload) => ({
+  ScanID: pickFirst(payload, ["ScanID", "scanID", "scanId", "id", "Id"], null),
+  RestaurantName: String(
+    pickFirst(payload, ["RestaurantName", "restaurantName", "name", "Name"], "Unknown restaurant")
+  ),
+  ScanDate: String(
+    pickFirst(payload, ["ScanDate", "scanDate", "createdAt", "CreatedAt", "date", "Date"], new Date().toISOString())
+  ),
+  FilePath: String(pickFirst(payload, ["FilePath", "filePath"], "") || ""),
+  Dishes: Array.isArray(pickFirst(payload, ["Dishes", "dishes"], []))
+    ? pickFirst(payload, ["Dishes", "dishes"], []).map(normalizeDish)
+    : [],
+});
 
-  return [];
+const toApiError = (error, fallbackMessage) => {
+  const apiMessage =
+    error?.response?.data?.message ||
+    (typeof error?.response?.data === "string" ? error.response.data : "") ||
+    (axios.isAxiosError(error) ? error.message : "") ||
+    fallbackMessage;
+
+  return new Error(apiMessage);
 };
 
-async function tryFetch(url) {
-  const res = await http.get(url);
-  return extractHistoryList(res.data);
+export async function getScanHistory() {
+  try {
+    const res = await http.get("/scan/history");
+    return extractList(res.data).map(normalizeHistoryRecord);
+  } catch (error) {
+    throw toApiError(error, "Failed to load scan history.");
+  }
 }
 
-export async function getScanHistory() {
-  const userId = localStorage.getItem("sb_userId");
-  const candidateUrls = userId
-    ? [`/user/${userId}/history`, `/history/${userId}`, `/user/history/${userId}`, "/history"]
-    : ["/history"];
-
-  let lastError = null;
-
-  for (const url of candidateUrls) {
-    try {
-      const records = await tryFetch(url);
-      return records.map(normalizeHistoryRecord);
-    } catch (error) {
-      lastError = error;
-
-      const status = error?.response?.status;
-      if (status && ![404, 500].includes(status)) {
-        break;
-      }
-    }
+export async function getScanDetails(scanId) {
+  try {
+    const res = await http.get(`/scan/${scanId}`);
+    return normalizeDetails(res.data || {});
+  } catch (error) {
+    throw toApiError(error, "Failed to load scan details.");
   }
-
-  const apiMessage =
-    lastError?.response?.data?.message ||
-    (typeof lastError?.response?.data === "string" ? lastError.response.data : "") ||
-    (axios.isAxiosError(lastError) ? lastError.message : "") ||
-    "Failed to load scan history.";
-
-  throw new Error(apiMessage);
 }
