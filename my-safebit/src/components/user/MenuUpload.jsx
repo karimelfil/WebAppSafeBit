@@ -115,7 +115,7 @@ function normalizeAiDish(dish, index) {
   const isSafe = safetyLevel === 'SAFE';
   const isUnsafe = safetyLevel === 'RISKY' || safetyLevel === 'UNSAFE';
   const hasWarning = safetyLevel === 'CAUTION' || needsUserConfirmation;
-  const displayLevel = safetyLevel === 'CAUTION' ? 'WARNING' : safetyLevel || 'UNKNOWN';
+  const displayLevel = safetyLevel === 'CAUTION' ? 'RISKY' : isUnsafe ? 'UNSAFE' : safetyLevel || 'UNKNOWN';
 
   const ingredientsRaw = dish?.ingredients_found || dish?.ingredientsFound || dish?.IngredientsFound;
   const ingredients = Array.isArray(ingredientsRaw) ? ingredientsRaw.filter(Boolean) : [];
@@ -559,7 +559,7 @@ export function MenuUpload() {
           </div>
           <div className={styles.cls031}>
             <div className={styles.cls027}>
-              <span className={styles.cls032}>Warning</span>
+              <span className={styles.cls032}>Risky</span>
               <AlertCircle className={styles.cls033} />
             </div>
             <div className={styles.cls034}>{warningDishes}</div>
