@@ -82,7 +82,7 @@ export default function UserDashboard() {
         <aside
           className={[
             "fixed md:static inset-y-0 left-0 z-30",
-            "w-64 bg-white border-r border-gray-200",
+            "w-[292px] bg-white border-r border-[#e5e7eb]",
             "transform transition-transform duration-200 md:translate-x-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           ].join(" ")}
@@ -112,10 +112,10 @@ export default function UserDashboard() {
                         setSidebarOpen(false);
                       }}
                       className={[
-                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
+                        "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-lg font-medium border transition-colors",
                         isActive
-                          ? "bg-[#e7f7ef] text-[#11915f]"
-                          : "text-gray-700 hover:bg-gray-100",
+                          ? "bg-[#e7f7ef] text-[#11915f] border-[#111827]"
+                          : "text-gray-700 border-transparent hover:bg-gray-100",
                       ].join(" ")}
                     >
                       <Icon className={styles.cls015} />
