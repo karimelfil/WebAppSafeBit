@@ -462,11 +462,18 @@ export function ScanHistory() {
                 </div>
               </div>
 
+              {selectedScan.Summary && (
+                <div className={styles.cls087}>
+                  <p className={styles.cls057}>AI summary</p>
+                  <p className={styles.cls058}>{selectedScan.Summary}</p>
+                </div>
+              )}
+
               {Array.isArray(selectedScan.Dishes) && selectedScan.Dishes.length > 0 && (
                 <div className={styles.cls068}>
                   <div className={styles.cls069}>
                     <p className={styles.cls061}>Scanned dishes</p>
-                    <p className={styles.cls070}>Each dish is grouped with its detected safety status and ingredient list.</p>
+                    <p className={styles.cls070}>Each dish shows only the essential result details.</p>
                   </div>
 
                   <div className={styles.cls071}>
@@ -489,6 +496,13 @@ export function ScanHistory() {
                           </div>
 
                           <div className={styles.cls075}>
+                            {dish.SafetyStatus !== "SAFE" && dish.Analysis && (
+                              <>
+                                <p className={styles.cls076}>AI analysis</p>
+                                <p className={styles.cls077}>{dish.Analysis}</p>
+                              </>
+                            )}
+
                             <p className={styles.cls076}>Ingredients</p>
                             {Array.isArray(dish.Ingredients) && dish.Ingredients.length > 0 ? (
                               <div className={styles.cls106}>
