@@ -107,8 +107,8 @@ const normalizeDish = (dish, index) => ({
   DishID: pickFirst(dish, ["DishID", "dishID", "dishId", "id", "Id"], index + 1),
   DishName: String(pickFirst(dish, ["DishName", "dishName", "name", "Name"], `Dish ${index + 1}`)),
   SafetyStatus: String(
-    pickFirst(dish, ["SafetyStatus", "safetyStatus", "status", "Status"], "UNKNOWN")
-  ).toUpperCase(),
+    pickFirst(dish, ["SafetyStatus", "safetyStatus", "status", "Status"], "unknown")
+  ).toLowerCase(),
   Ingredients: Array.isArray(pickFirst(dish, ["Ingredients", "ingredients"], []))
     ? pickFirst(dish, ["Ingredients", "ingredients"], [])
     : [],

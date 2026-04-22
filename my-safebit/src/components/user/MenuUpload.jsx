@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { http } from '../../services/http';
+import { getScanDetails } from '../../services/scanHistoryService';
 import { styles } from '../../styles/user/MenuUpload.styles.js';
 const IDB_DB = 'safebite_menu_upload';
 const IDB_STORE = 'files';
@@ -74,6 +75,15 @@ function formatToken(token) {
   return String(token).replaceAll('_', ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function toText(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+}
+
+function normalizeStringList(value) {
+  return Array.isArray(value) ? value.map(toText).filter(Boolean) : [];
+}
+
 function cleanDishName(name) {
   return String(name ?? '').replace(/^Dish Name:\s*/i, '').trim().toLowerCase();
 }
@@ -109,44 +119,147 @@ function extractStoredDishes(payload) {
   return merged.map(normalizeStoredDish).filter((x) => x.id && x.name);
 }
 
+function extractSavedMenuPath(payload) {
+  const candidates = [
+    payload?.filePath,
+    payload?.FilePath,
+    payload?.menuFilePath,
+    payload?.MenuFilePath,
+    payload?.savedFilePath,
+    payload?.SavedFilePath,
+    payload?.menu?.filePath,
+    payload?.menu?.FilePath,
+    payload?.result?.filePath,
+    payload?.result?.FilePath,
+    payload?.data?.filePath,
+    payload?.data?.FilePath,
+    payload?.aiResult?.filePath,
+    payload?.aiResult?.FilePath,
+  ];
+
+  return String(candidates.find((value) => typeof value === 'string' && value.trim()) || '').trim();
+}
+
+function extractScanId(payload) {
+  const candidates = [
+    payload?.scanID,
+    payload?.scanId,
+    payload?.ScanID,
+    payload?.id,
+    payload?.Id,
+    payload?.data?.scanID,
+    payload?.data?.scanId,
+    payload?.data?.ScanID,
+    payload?.result?.scanID,
+    payload?.result?.scanId,
+    payload?.result?.ScanID,
+    payload?.menu?.scanID,
+    payload?.menu?.scanId,
+    payload?.menu?.ScanID,
+  ];
+
+  const found = candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== '');
+  return found ?? null;
+}
+
 function normalizeAiDish(dish, index) {
-  const safetyLevel = (dish?.safety_level || dish?.safetyLevel || dish?.SafetyLevel || '').toUpperCase();
+  const safetyLevel = String(
+    dish?.safety_level || dish?.safetyLevel || dish?.SafetyLevel || ''
+  ).toLowerCase();
   const needsUserConfirmation = Boolean(dish?.needs_user_confirmation ?? dish?.needsUserConfirmation);
-  const isSafe = safetyLevel === 'SAFE';
-  const isUnsafe = safetyLevel === 'RISKY' || safetyLevel === 'UNSAFE';
-  const hasWarning = safetyLevel === 'CAUTION' || needsUserConfirmation;
-  const displayLevel = safetyLevel === 'CAUTION' ? 'RISKY' : isUnsafe ? 'UNSAFE' : safetyLevel || 'UNKNOWN';
+  const isSafe = safetyLevel === 'safe';
+  const isUnsafe = safetyLevel === 'unsafe';
+  const hasWarning = safetyLevel === 'risky' || needsUserConfirmation;
+  const displayLevel =
+    safetyLevel === 'safe'
+      ? 'SAFE'
+      : safetyLevel === 'risky'
+      ? 'RISKY'
+      : safetyLevel === 'unsafe'
+      ? 'UNSAFE'
+      : 'UNKNOWN';
 
   const ingredientsRaw = dish?.ingredients_found || dish?.ingredientsFound || dish?.IngredientsFound;
-  const ingredients = Array.isArray(ingredientsRaw) ? ingredientsRaw.filter(Boolean) : [];
-  const conflicts = Array.isArray(dish?.conflicts) ? dish.conflicts : [];
-  const notes = Array.isArray(dish?.notes) ? dish.notes : [];
+  const ingredients = normalizeStringList(ingredientsRaw).map(formatToken);
+  const conflicts = Array.isArray(dish?.conflicts)
+    ? dish.conflicts
+    : Array.isArray(dish?.Conflicts)
+    ? dish.Conflicts
+    : [];
+  const notes = normalizeStringList(dish?.notes ?? dish?.Notes);
 
-  const firstConflict = conflicts[0]?.explanation;
-  const firstNote = notes[0];
+  const conflictMessages = conflicts
+    .map((conflict) =>
+      toText(
+        conflict?.Explanation ??
+          conflict?.explanation ??
+          conflict?.Reason ??
+          conflict?.reason ??
+          conflict?.Description ??
+          conflict?.description
+      )
+    )
+    .filter(Boolean);
+  const directAnalysis = [
+    dish?.analysis,
+    dish?.Analysis,
+    dish?.aiAnalysis,
+    dish?.AiAnalysis,
+    dish?.AIAnalysis,
+    dish?.description,
+    dish?.Description,
+    dish?.summary,
+    dish?.Summary,
+    dish?.shortSummary,
+    dish?.ShortSummary,
+  ]
+    .map(toText)
+    .find(Boolean);
+  const descriptionFallback =
+    ingredients.length > 0 ? `Detected ingredients: ${ingredients.join(', ')}` : 'No ingredients detected';
+  const combinedAnalysis = [...conflictMessages, ...notes].filter(Boolean).join(' ');
 
   const rawDishName = dish?.dish_name || dish?.dishName || dish?.DishName || `Dish ${index + 1}`;
-
   const description = isSafe
-    ? ingredients.length
-      ? `Detected ingredients: ${ingredients.map(formatToken).join(', ')}`
-      : 'No ingredients detected'
-    : firstConflict ||
-      firstNote ||
-      (ingredients.length
-        ? `Detected ingredients: ${ingredients.map(formatToken).join(', ')}`
-        : 'No ingredients detected');
+    ? descriptionFallback
+    : combinedAnalysis || directAnalysis || descriptionFallback;
 
   return {
     id: toValidDishId(dish?.dish_id ?? dish?.dishId ?? dish?.DishId),
     name: String(rawDishName).replace(/^Dish Name:\s*/i, '').trim(),
     description,
-    category: safetyLevel || 'UNKNOWN',
+    category: safetyLevel || 'unknown',
     displayLevel,
-    allergens: ingredients.map(formatToken),
+    allergens: ingredients,
     isSafe,
     isUnsafe,
     hasWarning,
+  };
+}
+
+function normalizeHistoryDishForUpload(dish, index) {
+  const safetyLevel = String(dish?.SafetyStatus || dish?.safetyStatus || 'unknown').toLowerCase();
+  const ingredients = normalizeStringList(dish?.Ingredients ?? dish?.ingredients).map(formatToken);
+
+  return {
+    id: toValidDishId(dish?.DishID ?? dish?.dishID ?? dish?.dishId ?? dish?.id),
+    name: String(dish?.DishName ?? dish?.dishName ?? dish?.name ?? `Dish ${index + 1}`)
+      .replace(/^Dish Name:\s*/i, '')
+      .trim(),
+    description: toText(dish?.Analysis ?? dish?.analysis) || (ingredients.length > 0 ? `Detected ingredients: ${ingredients.join(', ')}` : 'No ingredients detected'),
+    category: safetyLevel || 'unknown',
+    displayLevel:
+      safetyLevel === 'safe'
+        ? 'SAFE'
+        : safetyLevel === 'risky'
+        ? 'RISKY'
+        : safetyLevel === 'unsafe'
+        ? 'UNSAFE'
+        : 'UNKNOWN',
+    allergens: ingredients,
+    isSafe: safetyLevel === 'safe',
+    isUnsafe: safetyLevel === 'unsafe',
+    hasWarning: safetyLevel === 'risky',
   };
 }
 
@@ -212,6 +325,7 @@ export function MenuUpload() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectedDishes, setDetectedDishes] = useState(null);
   const [analysisSummary, setAnalysisSummary] = useState('');
+  const [savedMenuPath, setSavedMenuPath] = useState('');
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [showResults, setShowResults] = useState(false);
 
@@ -275,6 +389,7 @@ export function MenuUpload() {
     setErrorMessage('');
     setDetectedDishes(null);
     setAnalysisSummary('');
+    setSavedMenuPath('');
     setCurrentResultsPage(1);
     setShowResults(false);
 
@@ -350,9 +465,11 @@ export function MenuUpload() {
         '';
 
       const storedDishes = extractStoredDishes(payload);
+      const menuPath = extractSavedMenuPath(payload);
+      const scanId = extractScanId(payload);
       const storedDishIdByName = new Map(storedDishes.map((dish) => [dish.name, dish.id]));
 
-      const normalizedDishes = apiDishes.map((dish, index) => {
+      let normalizedDishes = apiDishes.map((dish, index) => {
         const normalized = normalizeAiDish(dish, index);
         if (normalized.id) return normalized;
 
@@ -360,8 +477,37 @@ export function MenuUpload() {
         return { ...normalized, id: matchedId ?? null };
       });
 
+      if (scanId) {
+        try {
+          const details = await getScanDetails(scanId);
+          const historyDishes = Array.isArray(details?.Dishes) ? details.Dishes.map(normalizeHistoryDishForUpload) : [];
+
+          if (historyDishes.length > 0) {
+            const historyById = new Map(historyDishes.filter((dish) => dish.id).map((dish) => [dish.id, dish]));
+            const historyByName = new Map(historyDishes.map((dish) => [cleanDishName(dish.name), dish]));
+
+            normalizedDishes = normalizedDishes.map((dish) => {
+              const historyDish =
+                (dish.id ? historyById.get(dish.id) : null) ||
+                historyByName.get(cleanDishName(dish.name));
+
+              return historyDish
+                ? {
+                    ...dish,
+                    ...historyDish,
+                    id: dish.id ?? historyDish.id ?? null,
+                  }
+                : dish;
+            });
+          }
+        } catch {
+          // Keep the upload response fallback if detail retrieval is unavailable.
+        }
+      }
+
       setDetectedDishes(normalizedDishes);
       setAnalysisSummary(String(summaryText).trim());
+      setSavedMenuPath(menuPath);
       setCurrentResultsPage(1);
       setShowResults(true);
     } catch (error) {
@@ -374,6 +520,7 @@ export function MenuUpload() {
       setErrorMessage(apiMessage);
       setDetectedDishes(null);
       setAnalysisSummary('');
+      setSavedMenuPath('');
       setCurrentResultsPage(1);
       setShowResults(false);
     } finally {
@@ -386,6 +533,7 @@ export function MenuUpload() {
     setPreviewUrl(null);
     setDetectedDishes(null);
     setAnalysisSummary('');
+    setSavedMenuPath('');
     setCurrentResultsPage(1);
     setShowResults(false);
     setIsProcessing(false);
@@ -451,7 +599,7 @@ export function MenuUpload() {
 
 
   const safeDishes = detectedDishes?.filter((dish) => dish.isSafe).length || 0;
-  const warningDishes = detectedDishes?.filter((dish) => dish.hasWarning || dish.category === 'CAUTION').length || 0;
+  const warningDishes = detectedDishes?.filter((dish) => dish.hasWarning || dish.category === 'risky').length || 0;
   const unsafeDishes = detectedDishes?.filter((dish) => dish.isUnsafe).length || 0;
   const totalDishes = detectedDishes?.length || 0;
   const totalResultPages = Math.max(1, Math.ceil(totalDishes / RESULTS_PER_PAGE));
@@ -609,6 +757,22 @@ export function MenuUpload() {
           </Card>
         )}
 
+        {savedMenuPath && (
+          <Card className={styles.cls089}>
+            <CardContent className={styles.cls090}>
+              <div className={styles.cls091}>
+                <div className={styles.cls092}>
+                  <FileImage className={styles.cls093} />
+                </div>
+                <div className="min-w-0">
+                  <p className={styles.cls094}>Saved Menu Location</p>
+                  <p className="break-all text-sm text-slate-600">{savedMenuPath}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className={styles.cls043}>
           <CardHeader className={styles.cls048}>
             <div className={styles.cls096}>
@@ -634,7 +798,7 @@ export function MenuUpload() {
                     className={
                       dish.isSafe
                         ? 'bg-green-600 text-white hover:bg-green-600'
-                        : dish.hasWarning || dish.category === 'CAUTION'
+                        : dish.hasWarning || dish.category === 'risky'
                         ? 'bg-yellow-500 text-white hover:bg-yellow-500'
                         : 'bg-red-600 text-white hover:bg-red-600'
                     }
@@ -649,13 +813,14 @@ export function MenuUpload() {
                       dish.hasWarning ? 'border-yellow-200 bg-white text-yellow-900' : 'border-red-200 bg-white text-red-900'
                     }`}
                   >
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-80">AI analysis</p>
                     {dish.description}
                   </div>
                 )}
 
                 {dish.allergens.length > 0 && (
                   <div className={styles.cls053}>
-                    <p className={styles.cls054}>Detected Ingredients</p>
+                    <p className={styles.cls054}>Ingredients</p>
                     <div className={styles.cls055}>
                       {dish.allergens.map((allergen, aIndex) => (
                         <span
@@ -803,6 +968,22 @@ export function MenuUpload() {
                 </Button>
               </div>
             </div>
+          )}
+
+          {savedMenuPath && (
+            <Card className={styles.cls089}>
+              <CardContent className={styles.cls090}>
+                <div className={styles.cls091}>
+                  <div className={styles.cls092}>
+                    <FileImage className={styles.cls093} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={styles.cls094}>Saved Menu Location</p>
+                    <p className="break-all text-sm text-slate-600">{savedMenuPath}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           <Button

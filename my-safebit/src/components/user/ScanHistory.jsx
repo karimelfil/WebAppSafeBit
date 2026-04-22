@@ -26,7 +26,7 @@ import { styles } from "../../styles/user/ScanHistory.styles.js";
 import { getScanDetails, getScanHistory } from "../../services/scanHistoryService";
 
 const STATUS_META = {
-  SAFE: {
+  safe: {
     label: "Safe",
     Icon: ShieldCheck,
     iconClass: "h-4 w-4 text-emerald-600",
@@ -36,7 +36,7 @@ const STATUS_META = {
     dotClass: "bg-emerald-500",
     accentClass: "text-emerald-700",
   },
-  RISKY: {
+  risky: {
     label: "Risky",
     Icon: ShieldAlert,
     iconClass: "h-4 w-4 text-amber-600",
@@ -46,7 +46,7 @@ const STATUS_META = {
     dotClass: "bg-amber-500",
     accentClass: "text-amber-700",
   },
-  UNSAFE: {
+  unsafe: {
     label: "Unsafe",
     Icon: ShieldX,
     iconClass: "h-4 w-4 text-rose-600",
@@ -56,7 +56,7 @@ const STATUS_META = {
     dotClass: "bg-rose-500",
     accentClass: "text-rose-700",
   },
-  UNKNOWN: {
+  unknown: {
     label: "Review",
     Icon: AlertTriangle,
     iconClass: "h-4 w-4 text-slate-600",
@@ -68,7 +68,8 @@ const STATUS_META = {
   },
 };
 
-const getStatusMeta = (status) => STATUS_META[String(status || "UNKNOWN").toUpperCase()] || STATUS_META.UNKNOWN;
+const getStatusMeta = (status) =>
+  STATUS_META[String(status || "unknown").toLowerCase()] || STATUS_META.unknown;
 
 const getRecordTotals = (record) => ({
   safe: Number(record?.SafeCount) || 0,
@@ -78,9 +79,9 @@ const getRecordTotals = (record) => ({
 
 const getOverallStatus = (record) => {
   const { risky, unsafe } = getRecordTotals(record);
-  if (unsafe > 0) return "UNSAFE";
-  if (risky > 0) return "RISKY";
-  return "SAFE";
+  if (unsafe > 0) return "unsafe";
+  if (risky > 0) return "risky";
+  return "safe";
 };
 
 const getAiNarrative = (record) => {
@@ -111,9 +112,9 @@ const formatDateTime = (value) => {
 const buildStatusBreakdown = (record) => {
   const { safe, risky, unsafe } = getRecordTotals(record);
   return [
-    { key: "safe", label: "Safe dishes", count: safe, status: "SAFE" },
-    { key: "risky", label: "Risky dishes", count: risky, status: "RISKY" },
-    { key: "unsafe", label: "Unsafe dishes", count: unsafe, status: "UNSAFE" },
+    { key: "safe", label: "Safe dishes", count: safe, status: "safe" },
+    { key: "risky", label: "Risky dishes", count: risky, status: "risky" },
+    { key: "unsafe", label: "Unsafe dishes", count: unsafe, status: "unsafe" },
   ];
 };
 
@@ -469,6 +470,13 @@ export function ScanHistory() {
                 </div>
               )}
 
+              {selectedScan.FilePath && (
+                <div className={styles.cls087}>
+                  <p className={styles.cls057}>Saved menu location</p>
+                  <p className={`${styles.cls058} break-all`}>{selectedScan.FilePath}</p>
+                </div>
+              )}
+
               {Array.isArray(selectedScan.Dishes) && selectedScan.Dishes.length > 0 && (
                 <div className={styles.cls068}>
                   <div className={styles.cls069}>
@@ -496,7 +504,7 @@ export function ScanHistory() {
                           </div>
 
                           <div className={styles.cls075}>
-                            {dish.SafetyStatus !== "SAFE" && dish.Analysis && (
+                            {String(dish.SafetyStatus).toLowerCase() !== "safe" && dish.Analysis && (
                               <>
                                 <p className={styles.cls076}>AI analysis</p>
                                 <p className={styles.cls077}>{dish.Analysis}</p>
