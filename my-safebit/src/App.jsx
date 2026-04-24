@@ -49,6 +49,17 @@ export default function App() {
     setBootstrapped(true);
   }, [navigate]);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      navigate("/", { replace: true });
+    };
+
+    window.addEventListener("safebite:auth-expired", handleAuthExpired);
+    return () => {
+      window.removeEventListener("safebite:auth-expired", handleAuthExpired);
+    };
+  }, [navigate]);
+
   
   if (!bootstrapped) return null;
 

@@ -4,13 +4,14 @@ import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
 import { Alert, AlertDescription } from "../components/ui/alert";
 
 
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import logoImage from "../assets/logos/safebite.png";
 
 import { getAllAllergies, getAllDiseases, registerApi } from "../services/register";
@@ -102,6 +103,145 @@ const parseApiError = (err) => {
   summary = err.response.statusText || summary;
   return { summary, fieldErrors };
 };
+
+function SearchableHealthMultiSelect({
+  title,
+  searchPlaceholder,
+  emptyMessage,
+  loadingMessage,
+  items,
+  selectedIds,
+  onToggle,
+  onClear,
+  loading,
+  fieldError,
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(true);
+
+  const normalizedItems = useMemo(
+    () =>
+      (Array.isArray(items) ? items : []).map((item) => ({
+        ...item,
+        normalizedId:
+          typeof item?.id === "string" && !Number.isNaN(Number(item.id)) ? Number(item.id) : item?.id,
+      })),
+    [items]
+  );
+
+  const filteredItems = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return normalizedItems;
+    return normalizedItems.filter((item) => String(item?.name || "").toLowerCase().includes(term));
+  }, [normalizedItems, query]);
+
+  const selectedItems = useMemo(
+    () => normalizedItems.filter((item) => selectedIds.includes(item.normalizedId)),
+    [normalizedItems, selectedIds]
+  );
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <Badge className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+              {selectedItems.length} selected
+            </Badge>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end md:self-auto">
+          {selectedItems.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClear}
+              className="h-9 rounded-full px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            >
+              Clear
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="h-9 rounded-full px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          >
+            {isOpen ? "Collapse" : "Expand"}
+            {isOpen ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {selectedItems.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selectedItems.map((item) => (
+            <button
+              key={item.normalizedId}
+              type="button"
+              onClick={() => onToggle(item.normalizedId, false)}
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
+            >
+              <span>{item.name}</span>
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isOpen && (
+        <div className="mt-4 space-y-4">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="border-slate-300 bg-white pl-10 focus-visible:ring-emerald-500"
+            />
+          </div>
+
+          <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+            {loading && <div className="px-4 py-6 text-sm text-slate-500">{loadingMessage}</div>}
+
+            {!loading && filteredItems.length === 0 && (
+              <div className="px-4 py-6 text-sm text-slate-500">{emptyMessage}</div>
+            )}
+
+            {!loading &&
+              filteredItems.map((item, index) => {
+                const isSelected = selectedIds.includes(item.normalizedId);
+                return (
+                  <label
+                    key={item.normalizedId}
+                    className={`flex cursor-pointer items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 transition hover:bg-slate-50 ${
+                      isSelected ? "bg-emerald-50/70" : ""
+                    }`}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                      {index + 1}
+                    </div>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => onToggle(item.normalizedId, checked)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900">{item.name}</div>
+                      {isSelected && <div className="text-xs font-medium text-emerald-700">Selected</div>}
+                    </div>
+                  </label>
+                );
+              })}
+          </div>
+
+          {fieldError && <p className="text-xs text-red-600 whitespace-pre-line">{fieldError}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function RegisterPage({ onNavigateToLogin }) {
   const [step, setStep] = useState("personal");
@@ -523,27 +663,24 @@ export function RegisterPage({ onNavigateToLogin }) {
                 </div>
 
                 {hasAllergies === true && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-lg bg-gray-50">
-                    {loadingMeta && <div className="text-sm text-gray-500">Loading allergies...</div>}
-
-                    {!loadingMeta &&
-                      Array.isArray(allergies) &&
-                      allergies.map((a) => (
-                        <label key={a.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedAllergies.includes(
-                              typeof a.id === "string" && !Number.isNaN(Number(a.id)) ? Number(a.id) : a.id
-                            )}
-                            onCheckedChange={(checked) => toggleId(a.id, checked, setSelectedAllergies)}
-                          />
-                          <span className="text-sm">{a.name}</span>
-                        </label>
-                      ))}
-
-                    {!loadingMeta && Array.isArray(allergies) && allergies.length === 0 && (
-                      <div className="text-sm text-gray-500">No allergies found.</div>
-                    )}
-                  </div>
+                  <SearchableHealthMultiSelect
+                    title="Allergy selection"
+                    searchPlaceholder="Search allergies by name"
+                    emptyMessage={
+                      loadingMeta
+                        ? ""
+                        : Array.isArray(allergies) && allergies.length > 0
+                          ? "No allergies matched your search."
+                          : "No allergies found."
+                    }
+                    loadingMessage="Loading allergies..."
+                    items={allergies}
+                    selectedIds={selectedAllergies}
+                    onToggle={(id, checked) => toggleId(id, checked, setSelectedAllergies)}
+                    onClear={() => setSelectedAllergies([])}
+                    loading={loadingMeta}
+                    fieldError={fieldErrors.selectedAllergies}
+                  />
                 )}
               </div>
 
@@ -572,27 +709,24 @@ export function RegisterPage({ onNavigateToLogin }) {
                 </div>
 
                 {hasDiseases === true && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border rounded-lg bg-gray-50">
-                    {loadingMeta && <div className="text-sm text-gray-500">Loading diseases...</div>}
-
-                    {!loadingMeta &&
-                      Array.isArray(diseases) &&
-                      diseases.map((d) => (
-                        <label key={d.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedDiseases.includes(
-                              typeof d.id === "string" && !Number.isNaN(Number(d.id)) ? Number(d.id) : d.id
-                            )}
-                            onCheckedChange={(checked) => toggleId(d.id, checked, setSelectedDiseases)}
-                          />
-                          <span className="text-sm">{d.name}</span>
-                        </label>
-                      ))}
-
-                    {!loadingMeta && Array.isArray(diseases) && diseases.length === 0 && (
-                      <div className="text-sm text-gray-500">No diseases found.</div>
-                    )}
-                  </div>
+                  <SearchableHealthMultiSelect
+                    title="Disease selection"
+                    searchPlaceholder="Search diseases by name"
+                    emptyMessage={
+                      loadingMeta
+                        ? ""
+                        : Array.isArray(diseases) && diseases.length > 0
+                          ? "No diseases matched your search."
+                          : "No diseases found."
+                    }
+                    loadingMessage="Loading diseases..."
+                    items={diseases}
+                    selectedIds={selectedDiseases}
+                    onToggle={(id, checked) => toggleId(id, checked, setSelectedDiseases)}
+                    onClear={() => setSelectedDiseases([])}
+                    loading={loadingMeta}
+                    fieldError={fieldErrors.selectedDiseases}
+                  />
                 )}
               </div>
 
@@ -637,4 +771,3 @@ export function RegisterPage({ onNavigateToLogin }) {
     </div>
   );
 }
-``

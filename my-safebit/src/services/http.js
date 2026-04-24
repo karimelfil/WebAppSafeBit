@@ -1,6 +1,16 @@
 import axios from "axios";
 import { API_BASE } from "../config/apiBase";
 
+const AUTH_STORAGE_KEYS = ["sb_token", "sb_role", "sb_userId"];
+
+function clearAuthStorage() {
+  for (const key of AUTH_STORAGE_KEYS) {
+    localStorage.removeItem(key);
+  }
+  sessionStorage.removeItem("sb_session_active");
+  sessionStorage.removeItem("sb_active_section");
+}
+
 // Create an Axios instance with the base URL and timeout
 export const http = axios.create({
   baseURL: API_BASE,
@@ -40,8 +50,8 @@ http.interceptors.response.use(
     }
 // If the error response status is 401 and the request URL is not the login endpoint, clear localStorage and redirect to the login page
     if (error?.response?.status === 401 && error.config?.url !== "/auth/login") {
-      localStorage.clear();
-      window.location.href = "/";
+      clearAuthStorage();
+      window.dispatchEvent(new Event("safebite:auth-expired"));
     }
     return Promise.reject(error);
   }
