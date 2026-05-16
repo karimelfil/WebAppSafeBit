@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import { LoginPage } from "./components/LoginPage/LoginPage";
+import { LoginPage } from "./auth/LoginPage";
 import AdminDashboard from "./admin/AdminDashboard";
-import UserDashboard from "./pages/UserDashboard";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { RegisterPage } from "./pages/RegisterPage";
+import UserDashboard from "./user/UserDashboard";
+import { ForgotPasswordPage } from "./auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "./auth/ResetPasswordPage";
+import { RegisterPage } from "./auth/RegisterPage";
 
-//check if the session auth is active by checking sessionStorage
+//check if session is still active stored in sessionStorage 
 function hasActiveAuthSession() {
   if (typeof window === "undefined") return false;
   return sessionStorage.getItem("sb_session_active") === "1";
 }
 
-// if the user is not authenticated or does not have the required role  redirect to login page
+// if user is not authenticated or role is not allowed, redirect to login page otherwise render the children components
 function ProtectedRoute({ children, allowedRoles }) {
   const token = localStorage.getItem("sb_token");
   const role = (localStorage.getItem("sb_role") || "").toLowerCase();
@@ -30,10 +30,10 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 export default function App() {
   const navigate = useNavigate();
-  // Prevents the app from rendering routes before checking authentication.
+  //prevent rendering until auth is done
   const [bootstrapped, setBootstrapped] = useState(false);
 
-  // On app load  check if there is  an active session and navigate 
+  // on load check active session and redirect based on the role
   useEffect(() => {
     const token = localStorage.getItem("sb_token");
     const role = (localStorage.getItem("sb_role") || "").toLowerCase();
@@ -49,6 +49,7 @@ export default function App() {
     setBootstrapped(true);
   }, [navigate]);
 
+  // session expired event listener to handle session expiration and redirect to login page
   useEffect(() => {
     const handleAuthExpired = () => {
       navigate("/", { replace: true });

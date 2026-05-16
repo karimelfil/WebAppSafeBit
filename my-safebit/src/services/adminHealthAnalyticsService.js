@@ -1,18 +1,21 @@
 import { http } from "./http";
 
+//convert string to number with fallback
 const toNumber = (value, fallback = 0) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
-
+//convert value to array if it's not already an array
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
+// Normalizes health analytics insights from the API to a consistent format for the frontend
 const normalizeInsight = (item) => ({
   title: String(item?.title ?? ""),
   message: String(item?.message ?? ""),
   type: String(item?.type ?? "info").toLowerCase(),
 });
 
+// Service function to fetch health analytics data for the admin dashboard
 export async function getHealthAnalytics() {
   const res = await http.get("/HealthAnalytics");
   const data = res?.data ?? {};

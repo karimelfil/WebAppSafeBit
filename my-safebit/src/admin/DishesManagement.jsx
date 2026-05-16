@@ -1,54 +1,112 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { styles } from '../styles/admin/DishesManagement.styles.js';
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "../components/ui/dialog";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { Search, Eye, UtensilsCrossed, ChefHat, AlertTriangle } from "lucide-react";
-
+import {
+  Search,
+  Eye,
+  UtensilsCrossed,
+  ChefHat,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Loader2,
+} from "lucide-react";
 import { getAllDishesAdmin, getDishIngredients } from "../services/adminDishesService";
+import {
+  styles,
+  getStatusTagClass,
+  getSkeletonBarClass,
+  getRowClass,
+  getPagerNumberClass,
+  skeletonBarWidths,
+} from "../styles/admin/DishesManagement.styles";
 
 const PAGE_SIZE = 10;
 
+//transfrom date and time to a visible format 
 const formatDateTime = (value) => {
   if (!value) return "-";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString();
+
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
+
+//onloads skeleton while data is being fetched
+function SkeletonRow() {
+  return (
+    <tr className={styles.tableSkeletonRow}>
+      {skeletonBarWidths.map((width, index) => (
+        <td key={index} className={styles.tableCell}>
+          <div className={getSkeletonBarClass(width)} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+// Status tag component with dynamic color based on status
+function StatusTag({ children, color = "blue" }) {
+  return <span className={getStatusTagClass(color)}>{children}</span>;
+}
+
+// Error banner component to display error messages with an optional dismiss button
+function ErrorBanner({ text, onDismiss }) {
+  if (!text) return null;
+
+  return (
+    <div className={styles.errorBanner}>
+      <AlertTriangle className={styles.errorIcon} />
+      <p className={styles.errorText}>{text}</p>
+      {onDismiss && (
+        <button type="button" onClick={onDismiss} className={styles.dismissButton}>
+          <X className={styles.dismissIcon} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+//info row for dish details popup
+function InfoRow({ label, children, last = false }) {
+  return (
+    <div className={`${styles.infoRow} ${last ? "" : styles.infoRowBorder}`.trim()}>
+      <div className={styles.infoLabel}>{label}</div>
+      <div className={styles.infoValue}>{children}</div>
+    </div>
+  );
+}
 
 export function DishesManagement() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState("");
-
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [selectedDish, setSelectedDish] = useState(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
   const [actionError, setActionError] = useState("");
 
+  // Fetches the list of dishes from the backend API when the component mounts
   useEffect(() => {
     let cancelled = false;
 
-    async function loadDishes() {
+    const loadDishes = async () => {
       setLoading(true);
       setListError("");
 
@@ -56,18 +114,18 @@ export function DishesManagement() {
         const data = await getAllDishesAdmin();
         if (!cancelled) setDishes(data);
       } catch (err) {
-        console.error(err);
         if (!cancelled) {
           const msg =
             (axios.isAxiosError(err) &&
               (err.response?.data?.message || err.response?.data || err.message)) ||
             "Failed to load dishes.";
+
           setListError(typeof msg === "string" ? msg : "Failed to load dishes.");
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
+    };
 
     loadDishes();
 
@@ -76,24 +134,25 @@ export function DishesManagement() {
     };
   }, []);
 
+  //search dishes by name, restaurant, id 
   const filteredDishes = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return dishes;
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return dishes;
 
-    return dishes.filter((dish) => {
-      return (
-        (dish.name || "").toLowerCase().includes(q) ||
-        (dish.restaurant || "").toLowerCase().includes(q) ||
-        (dish.id || "").toLowerCase().includes(q) ||
-        (dish.uploadedBy || "").toLowerCase().includes(q)
-      );
-    });
+    return dishes.filter(
+      (dish) =>
+        (dish.name || "").toLowerCase().includes(query) ||
+        (dish.restaurant || "").toLowerCase().includes(query) ||
+        (dish.id || "").toLowerCase().includes(query) ||
+        (dish.uploadedBy || "").toLowerCase().includes(query)
+    );
   }, [dishes, searchTerm]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  //Pagination Logic 
   const totalPages = Math.max(1, Math.ceil(filteredDishes.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
 
@@ -106,20 +165,14 @@ export function DishesManagement() {
     return filteredDishes.slice(start, start + PAGE_SIZE);
   }, [filteredDishes, page]);
 
+  //open dish details dialog and fetch ingredients for the selected dish
   const handleViewDish = async (dish) => {
     setActionError("");
-
-    setSelectedDish({
-      ...dish,
-      ingredients: [],
-    });
-
+    setSelectedDish({ ...dish, ingredients: [] });
     setShowDetailsDialog(true);
 
     if (!dish.detailsId) {
-      setActionError(
-        `Cannot load details for ${dish.id}: API expects numeric dishId and no valid id was found.`
-      );
+      setActionError(`Cannot load details for ${dish.id}: no valid numeric id found.`);
       return;
     }
 
@@ -129,211 +182,342 @@ export function DishesManagement() {
       const details = await getDishIngredients(dish.detailsId);
       setSelectedDish((prev) => {
         if (!prev || prev.id !== dish.id) return prev;
+
         return {
           ...prev,
-          ingredients: details.ingredients,
+          ingredients: details.ingredients || [],
         };
       });
     } catch (err) {
-      console.error(err);
       const msg =
         (axios.isAxiosError(err) &&
           (err.response?.data?.message || err.response?.data || err.message)) ||
         "Failed to load ingredients.";
+
       setActionError(typeof msg === "string" ? msg : "Failed to load ingredients.");
     } finally {
       setIngredientsLoading(false);
     }
   };
 
+  // Calculate the index range of the currently displayed dishes for the footer text
+  const startIdx = (page - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(page * PAGE_SIZE, filteredDishes.length);
+
   return (
-    <div className={styles.cls001}>
-      <div className={styles.cls002}>
+    <div className={styles.page}>
+      <div className={styles.header}>
         <div>
-          <h2 className={styles.cls003}>Dishes & Ingredients Management</h2>
-          <p className={styles.cls004}>
+          <h2 className={styles.title}>Dishes &amp; Ingredients</h2>
+          <p className={styles.subtitle}>
             Comprehensive overview of all uploaded dishes and ingredient analysis
           </p>
         </div>
-        <div className={styles.cls005}>
-          <Search className={styles.cls006} />
-          <Input
-            placeholder="Search dishes, restaurants, or users..."
+
+        <div className={styles.searchWrap}>
+          <Search className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search dishes, restaurants..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={styles.cls007}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className={styles.searchInput}
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              className={styles.clearButton}
+            >
+              <X className={styles.viewButtonIcon} />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className={styles.cls008}>
-        <div className={styles.cls009}>
+      <div className={styles.summaryGrid}>
+        <div className={styles.summaryCard}>
+          <div className={`${styles.summaryIconWrap} ${styles.summaryBlue}`}>
+            <ChefHat className={styles.summaryBlueIcon} />
+          </div>
           <div>
-            <p className={styles.cls010}>Total Dishes Analyzed</p>
-            <p className={styles.cls011}>{dishes.length}</p>
-            <p className={styles.cls012}>All uploaded dishes in the system</p>
+            <p className={styles.summaryLabel}>Total Dishes</p>
+            <p className={styles.summaryValue}>
+              {loading ? <span className={styles.summaryValueSkeleton} /> : dishes.length}
+            </p>
+            <p className={styles.summaryBody}>All dishes in the system</p>
           </div>
-          <div className={styles.cls013}>
-            <ChefHat className={styles.cls014} />
+        </div>
+
+        <div className={styles.summaryCard}>
+          <div className={`${styles.summaryIconWrap} ${styles.summaryEmerald}`}>
+            <Search className={styles.summaryEmeraldIcon} />
+          </div>
+          <div>
+            <p className={styles.summaryLabel}>Filtered Results</p>
+            <p className={styles.summaryValue}>
+              {loading ? (
+                <span className={styles.summaryValueSkeleton} />
+              ) : (
+                filteredDishes.length
+              )}
+            </p>
+            <p className={styles.summaryBody}>Matching current search</p>
+          </div>
+        </div>
+
+        <div className={styles.summaryCard}>
+          <div className={`${styles.summaryIconWrap} ${styles.summaryAmber}`}>
+            <UtensilsCrossed className={styles.summaryAmberIcon} />
+          </div>
+          <div>
+            <p className={styles.summaryLabel}>Current Page</p>
+            <p className={styles.summaryValue}>
+              {page} / {totalPages}
+            </p>
+            <p className={styles.summaryBody}>{PAGE_SIZE} dishes per page</p>
           </div>
         </div>
       </div>
 
-      {listError && (
-        <Alert className={styles.cls015}>
-          <AlertTriangle className={styles.cls016} />
-          <AlertDescription className={styles.cls017}>{listError}</AlertDescription>
-        </Alert>
-      )}
+      <ErrorBanner text={listError} onDismiss={() => setListError("")} />
 
-      <div className={styles.cls018}>
-        <div className={styles.cls019}>
-          <Table>
-            <TableHeader className={styles.cls020}>
-              <TableRow>
-                <TableHead className={styles.cls021}>Dish ID</TableHead>
-                <TableHead className={styles.cls021}>Dish Name</TableHead>
-                <TableHead className={styles.cls021}>Restaurant</TableHead>
-                <TableHead className={styles.cls021}>Upload Date</TableHead>
-                <TableHead className={styles.cls022}>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <div className={styles.tableCard}>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr className={styles.tableHeadRow}>
+                {["Dish ID", "Dish Name", "Restaurant", "Upload Date", "Actions"].map(
+                  (heading, index) => (
+                    <th
+                      key={heading}
+                      className={`${styles.tableHead} ${index === 4 ? styles.tableHeadRight : ""}`.trim()}
+                    >
+                      {heading}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+
+            <tbody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <div className={styles.cls023}>Loading dishes...</div>
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 6 }).map((_, index) => <SkeletonRow key={index} />)
               ) : paginatedDishes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <div className={styles.cls023}>No dishes found.</div>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={5}>
+                    <div className={styles.emptyState}>
+                      <ChefHat className={styles.emptyIcon} />
+                      <p className={styles.emptyTitle}>No dishes found</p>
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm("")}
+                          className={styles.clearSearch}
+                        >
+                          Clear search
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               ) : (
-                paginatedDishes.map((dish) => (
-                  <TableRow key={dish.id} className={styles.cls024}>
-                    <TableCell className={styles.cls025}>{dish.id}</TableCell>
-                    <TableCell className={styles.cls025}>{dish.name}</TableCell>
-                    <TableCell className={styles.cls026}>{dish.restaurant || "-"}</TableCell>
-                    <TableCell className={styles.cls027}>
+                paginatedDishes.map((dish, index) => (
+                  <tr key={dish.id} className={getRowClass(index)}>
+                    <td className={styles.tableCell}>
+                      <span className={styles.idPill}>{dish.id}</span>
+                    </td>
+                    <td className={styles.tableCell}>
+                      <span className={styles.nameText}>{dish.name || "Unknown Dish"}</span>
+                    </td>
+                    <td className={styles.tableCell}>
+                      {dish.restaurant ? (
+                        <StatusTag color="green">{dish.restaurant}</StatusTag>
+                      ) : (
+                        <span className={styles.mutedText}>-</span>
+                      )}
+                    </td>
+                    <td className={`${styles.tableCell} ${styles.dateText}`}>
                       {formatDateTime(dish.uploadedAt)}
-                    </TableCell>
-                    <TableCell className={styles.cls028}>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                    </td>
+                    <td className={`${styles.tableCell} ${styles.tableHeadRight}`}>
+                      <button
+                        type="button"
                         onClick={() => handleViewDish(dish)}
-                        className={styles.cls029}
+                        className={styles.viewButton}
                       >
-                        <Eye className={styles.cls030} />
+                        <Eye className={styles.viewButtonIcon} />
                         View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
 
         {!loading && filteredDishes.length > 0 && (
-          <div className={styles.cls031}>
-            <p className={styles.cls027}>
-              Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filteredDishes.length)} of {filteredDishes.length}
+          <div className={styles.tableFooter}>
+            <p className={styles.footerText}>
+              Showing <span className={styles.footerEmphasis}>{startIdx}-{endIdx}</span> of{" "}
+              <span className={styles.footerEmphasis}>{filteredDishes.length}</span> dishes
             </p>
-            <div className={styles.cls032}>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+
+            <div className={styles.pager}>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((value) => Math.max(1, value - 1))}
                 disabled={page === 1}
+                className={styles.pagerButton}
               >
-                Previous
-              </Button>
-              <span className={styles.cls033}>
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                <ChevronLeft className={styles.dismissIcon} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, index) => index + 1)
+                .filter(
+                  (item) => item === 1 || item === totalPages || Math.abs(item - page) <= 1
+                )
+                .reduce((acc, item, index, arr) => {
+                  if (index > 0 && item - arr[index - 1] > 1) acc.push("...");
+                  acc.push(item);
+                  return acc;
+                }, [])
+                .map((item, index) =>
+                  item === "..." ? (
+                    <span key={`ellipsis-${index}`} className={styles.pagerEllipsis}>
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      className={getPagerNumberClass(item === page)}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((value) => Math.min(totalPages, value + 1))}
                 disabled={page === totalPages}
+                className={styles.pagerButton}
               >
-                Next
-              </Button>
+                <ChevronRight className={styles.dismissIcon} />
+              </button>
             </div>
           </div>
         )}
       </div>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className={styles.cls034}>
-          <DialogHeader>
-            <DialogTitle className={styles.cls035}>
-              <div className={styles.cls036}>
-                <UtensilsCrossed className={styles.cls037} />
-              </div>
-              <div>
-                <div className={styles.cls038}>{selectedDish?.name || "Dish Details"}</div>
-                <div className={styles.cls039}>{selectedDish?.restaurant || "-"}</div>
-              </div>
-            </DialogTitle>
-            <DialogDescription className={styles.cls040}>
-              Complete ingredient analysis and detailed information
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className={styles.dialog}>
+          <div className={styles.dialogHeader}>
+            <button
+              type="button"
+              onClick={() => setShowDetailsDialog(false)}
+              className={styles.dialogClose}
+            >
+              <X className={styles.dialogCloseIcon} />
+            </button>
 
-          {actionError && (
-            <Alert className={styles.cls015}>
-              <AlertTriangle className={styles.cls016} />
-              <AlertDescription className={styles.cls017}>{actionError}</AlertDescription>
-            </Alert>
-          )}
-
-          {selectedDish && (
-            <div className={styles.cls041}>
-              <div>
-                <p className={styles.cls042}>Dish Information</p>
-                <div className={styles.cls043}>
-                  <div className={styles.cls044}>
-                    <span className={styles.cls040}>Dish ID:</span>
-                    <span className={styles.cls025}>{selectedDish.id}</span>
-                  </div>
-                  <div className={styles.cls044}>
-                    <span className={styles.cls040}>Upload Date:</span>
-                    <span className={styles.cls025}>{formatDateTime(selectedDish.uploadedAt)}</span>
-                  </div>
-                </div>
+            <div className={styles.dialogTitleRow}>
+              <div className={styles.dialogIconWrap}>
+                <UtensilsCrossed className={styles.dialogIcon} />
               </div>
 
-              <div>
-                <p className={styles.cls042}>Detected Ingredients</p>
-                {ingredientsLoading ? (
-                  <div className={styles.cls045}>Loading ingredients...</div>
-                ) : selectedDish.ingredients?.length ? (
-                  <div className={styles.cls046}>
-                    {selectedDish.ingredients.map((ingredient, idx) => (
-                      <div
-                        key={`${ingredient}-${idx}`}
-                        className={styles.cls047}
-                      >
-                        {ingredient}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.cls045}>No ingredients found for this dish.</div>
-                )}
-              </div>
+              <DialogHeader className={styles.dialogHeaderText}>
+                <DialogTitle className={styles.dialogTitle}>
+                  {selectedDish?.name || "Dish Details"}
+                </DialogTitle>
+
+                <DialogDescription className={styles.dialogDescription}>
+                  Dish information and ingredient analysis
+                </DialogDescription>
+              </DialogHeader>
             </div>
-          )}
+          </div>
+
+          <div className={styles.dialogBody}>
+            <ErrorBanner text={actionError} onDismiss={() => setActionError("")} />
+
+            {selectedDish && (
+              <>
+                <section>
+                  <h3 className={styles.sectionTitle}>Dish Information</h3>
+
+                  <div className={styles.sectionCard}>
+                    <InfoRow label="Dish ID">
+                      <span className={styles.idBadge}>{selectedDish.id}</span>
+                    </InfoRow>
+
+                    <InfoRow label="Dish Name">
+                      <span className={styles.infoValueTruncate}>
+                        {selectedDish.name || "Unknown Dish"}
+                      </span>
+                    </InfoRow>
+
+                    <InfoRow label="Upload Date">
+                      <span>{formatDateTime(selectedDish.uploadedAt)}</span>
+                    </InfoRow>
+
+                    <InfoRow label="Restaurant" last>
+                      {selectedDish.restaurant ? (
+                        <StatusTag color="green">{selectedDish.restaurant}</StatusTag>
+                      ) : (
+                        <span className={styles.helperText}>Not assigned</span>
+                      )}
+                    </InfoRow>
+                  </div>
+                </section>
+
+                <section>
+                  <div className={styles.sectionHeader}>
+                    <h3 className={styles.sectionTitle}>Detected Ingredients</h3>
+
+                    {!ingredientsLoading && selectedDish.ingredients?.length > 0 && (
+                      <span className={styles.countText}>
+                        {selectedDish.ingredients.length} items
+                      </span>
+                    )}
+                  </div>
+
+                  {ingredientsLoading ? (
+                    <div className={styles.loadingBox}>
+                      <Loader2 className={styles.loadingIcon} />
+                      <span className={styles.loadingText}>Loading ingredients...</span>
+                    </div>
+                  ) : selectedDish.ingredients?.length ? (
+                    <div className={styles.ingredientCard}>
+                      <div className={styles.ingredientList}>
+                        {selectedDish.ingredients.map((ingredient, index) => (
+                          <span
+                            key={`${ingredient}-${index}`}
+                            className={styles.ingredientChip}
+                          >
+                            {ingredient}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.noIngredients}>
+                      <UtensilsCrossed className={styles.noIngredientsIcon} />
+                      <p className={styles.noIngredientsTitle}>No ingredients found</p>
+                      <p className={styles.noIngredientsBody}>
+                        No ingredient data is available for this dish.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-
-

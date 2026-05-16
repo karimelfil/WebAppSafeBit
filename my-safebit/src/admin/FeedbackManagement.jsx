@@ -1,7 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,21 +15,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { Search, Eye, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import {
+  Search,
+  Eye,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Loader2,
+  FileText,
+} from "lucide-react";
 import {
   getFeedbackReports,
   getFeedbackReportDetails,
   updateFeedbackStatus,
 } from "../services/adminFeedbackService";
-import { styles } from '../styles/admin/FeedbackManagement.styles.js';
+import {
+  styles,
+  getStatusPillClass,
+  getFilterTabClass,
+  getFilterTabCountClass,
+} from "../styles/admin/FeedbackManagement.styles.js";
+
+//convert data to a visible format 
 const formatDate = (value) => {
-  if (!value) return "-";
+  if (!value) return "—";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleString();
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-GB", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 };
 
+//get error messages from the api 
 const getErrorMessage = (err) => {
   const msg =
     (axios.isAxiosError(err) &&
@@ -40,22 +56,68 @@ const getErrorMessage = (err) => {
   return typeof msg === "string" ? msg : "Request failed.";
 };
 
+//status mapping for API updates
+const STATUS_CONFIG = {
+  pending:  { label: "Pending",      pill: "bg-amber-50 text-amber-700 border-amber-200",  dot: "bg-amber-400",   icon: Clock },
+  reviewed: { label: "Under Review", pill: "bg-blue-50 text-blue-700 border-blue-200",    dot: "bg-blue-400",    icon: Eye },
+  resolved: { label: "Resolved",     pill: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400", icon: CheckCircle },
+};
+
+//list badge status mapping for API updates
+function StatusPill({ status, size = "sm" }) {
+  const cfg = STATUS_CONFIG[status] || { label: status };
+  const classes = getStatusPillClass(status, size);
+  return (
+    <span className={classes.pill}>
+      <span className={classes.dot} />
+      {cfg.label}
+    </span>
+  );
+}
+
+//detail field component for report details dialog
+function DetailField({ label, value, span }) {
+  return (
+    <div className={span ? styles.cls060 : ""}>
+      <p className={styles.cls058}>{label}</p>
+      <p className={styles.cls059}>{value || "—"}</p>
+    </div>
+  );
+}
+
+//stat card component for summary statistics at the top of the page
+function StatCard({ label, value, icon: Icon, cardClass, labelClass, valueClass, iconWrapClass, iconClass }) {
+  return (
+    <div className={cardClass}>
+      <div className={styles.cls017}>
+        <div>
+          <p className={labelClass}>{label}</p>
+          <p className={valueClass}>{value}</p>
+        </div>
+        <div className={iconWrapClass}>
+          <Icon className={iconClass} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FeedbackManagement() {
-  const [reports, setReports] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [reports, setReports]             = useState([]);
+  const [searchTerm, setSearchTerm]       = useState("");
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [activeStatus, setActiveStatus] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [activeStatus, setActiveStatus]   = useState("all");
+  const [loading, setLoading]             = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage]   = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Fetch feedback reports on component mount
   useEffect(() => {
     let mounted = true;
-
-    const load = async () => {
+    (async () => {
       setLoading(true);
       setErrorMessage("");
       try {
@@ -66,48 +128,38 @@ export function FeedbackManagement() {
       } finally {
         if (mounted) setLoading(false);
       }
-    };
-
-    load();
-    return () => {
-      mounted = false;
-    };
+    })();
+    return () => { mounted = false; };
   }, []);
 
+  // Compute counts for each status category for the summary statistics
+  const counts = useMemo(() => ({
+    pending:  reports.filter((r) => r.status === "pending").length,
+    reviewed: reports.filter((r) => r.status === "reviewed").length,
+    resolved: reports.filter((r) => r.status === "resolved").length,
+  }), [reports]);
+
+  // Filter reports based on search term and active status tab
   const filteredReports = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
     return reports.filter((item) => {
-      const q = searchTerm.trim().toLowerCase();
       const matchesSearch =
         !q ||
-        item.userEmail.toLowerCase().includes(q) ||
-        item.dishName.toLowerCase().includes(q) ||
-        item.reportID.toLowerCase().includes(q);
-
+        item.userEmail?.toLowerCase().includes(q) ||
+        item.dishName?.toLowerCase().includes(q) ||
+        item.reportID?.toLowerCase().includes(q);
       const matchesStatus = activeStatus === "all" || item.status === activeStatus;
       return matchesSearch && matchesStatus;
     });
   }, [reports, searchTerm, activeStatus]);
 
-  const pendingReports = useMemo(
-    () => reports.filter((f) => f.status === "pending").length,
-    [reports]
-  );
-  const reviewedReports = useMemo(
-    () => reports.filter((f) => f.status === "reviewed").length,
-    [reports]
-  );
-  const resolvedReports = useMemo(
-    () => reports.filter((f) => f.status === "resolved").length,
-    [reports]
-  );
-
+  // Handle viewing report details when "View" button is clicked
   const handleViewReport = async (item) => {
     setShowDetailsDialog(true);
     setSelectedReport(null);
     setDetailsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
-
     try {
       const details = await getFeedbackReportDetails(item.reportRouteId || item.reportID);
       setSelectedReport(details);
@@ -118,9 +170,9 @@ export function FeedbackManagement() {
         reportRouteId: item.reportRouteId,
         status: item.status,
         userEmail: item.userEmail,
-        userID: "-",
+        userID: "—",
         dishName: item.dishName,
-        dishID: "-",
+        dishID: "—",
         submittedAt: item.submittedAt,
         reportMessage: "",
       });
@@ -129,29 +181,25 @@ export function FeedbackManagement() {
     }
   };
 
+  //update report status 
   const handleUpdateStatus = async (newStatus) => {
     if (!selectedReport) return;
-
     setUpdatingStatus(true);
     setErrorMessage("");
     setSuccessMessage("");
-
     try {
       const normalized = await updateFeedbackStatus({
         reportId: selectedReport.reportRouteId || selectedReport.reportID,
         status: newStatus,
         updatedBy: "admin",
       });
-
       setReports((prev) =>
-        prev.map((report) =>
-          report.reportID === selectedReport.reportID
-            ? { ...report, status: normalized }
-            : report
+        prev.map((r) =>
+          r.reportID === selectedReport.reportID ? { ...r, status: normalized } : r
         )
       );
       setSelectedReport((prev) => (prev ? { ...prev, status: normalized } : prev));
-      setSuccessMessage("Feedback status updated successfully.");
+      setSuccessMessage("Status updated successfully.");
     } catch (err) {
       setErrorMessage(getErrorMessage(err));
     } finally {
@@ -159,52 +207,27 @@ export function FeedbackManagement() {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "reviewed":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "resolved":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return <Clock className={styles.cls001} />;
-      case "reviewed":
-        return <Eye className={styles.cls001} />;
-      case "resolved":
-        return <CheckCircle className={styles.cls001} />;
-      default:
-        return <AlertCircle className={styles.cls001} />;
-    }
-  };
-
+  // Define status tabs for filtering reports by status
   const statusTabs = [
-    { key: "all", label: "All Reports", count: reports.length },
-    { key: "pending", label: "Pending", count: pendingReports },
-    { key: "reviewed", label: "Under Review", count: reviewedReports },
-    { key: "resolved", label: "Resolved", count: resolvedReports },
+    { key: "all",      label: "All",          count: reports.length },
+    { key: "pending",  label: "Pending",       count: counts.pending },
+    { key: "reviewed", label: "Under Review",  count: counts.reviewed },
+    { key: "resolved", label: "Resolved",      count: counts.resolved },
   ];
 
   return (
     <div className={styles.cls002}>
+
       <div className={styles.cls003}>
         <div>
           <h2 className={styles.cls004}>Issue Reports</h2>
-          <p className={styles.cls005}>
-            Manage user-submitted reports about dish detection issues
-          </p>
+          <p className={styles.cls005}>Manage user-submitted reports about dish detection issues</p>
         </div>
         <div className={styles.cls006}>
           <Search className={styles.cls007} />
-          <Input
-            placeholder="Search reports..."
+          <input
+            type="text"
+            placeholder="Search by ID, dish or email…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.cls008}
@@ -213,66 +236,59 @@ export function FeedbackManagement() {
       </div>
 
       {!!errorMessage && (
-        <Alert className={styles.cls009}>
+        <div className={styles.cls009}>
           <AlertCircle className={styles.cls010} />
-          <AlertDescription className={styles.cls011}>{errorMessage}</AlertDescription>
-        </Alert>
+          <span className={styles.cls011}>{errorMessage}</span>
+        </div>
       )}
       {!!successMessage && (
-        <Alert className={styles.cls012}>
+        <div className={styles.cls012}>
           <CheckCircle className={styles.cls013} />
-          <AlertDescription className={styles.cls014}>{successMessage}</AlertDescription>
-        </Alert>
+          <span className={styles.cls014}>{successMessage}</span>
+        </div>
       )}
 
       <div className={styles.cls015}>
-        <div className={styles.cls016}>
-          <div className={styles.cls017}>
-            <div>
-              <p className={styles.cls018}>Total Reports</p>
-              <p className={styles.cls019}>{reports.length}</p>
-            </div>
-            <div className={styles.cls020}>
-              <AlertCircle className={styles.cls021} />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.cls022}>
-          <div className={styles.cls017}>
-            <div>
-              <p className={styles.cls023}>Pending Review</p>
-              <p className={styles.cls024}>{pendingReports}</p>
-            </div>
-            <div className={styles.cls025}>
-              <Clock className={styles.cls021} />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.cls016}>
-          <div className={styles.cls017}>
-            <div>
-              <p className={styles.cls018}>Under Review</p>
-              <p className={styles.cls019}>{reviewedReports}</p>
-            </div>
-            <div className={styles.cls020}>
-              <Eye className={styles.cls021} />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.cls026}>
-          <div className={styles.cls017}>
-            <div>
-              <p className={styles.cls027}>Resolved</p>
-              <p className={styles.cls028}>{resolvedReports}</p>
-            </div>
-            <div className={styles.cls029}>
-              <CheckCircle className={styles.cls021} />
-            </div>
-          </div>
-        </div>
+        <StatCard
+          label="Total Reports"
+          value={reports.length}
+          icon={FileText}
+          cardClass={styles.cls016}
+          labelClass={styles.cls018}
+          valueClass={styles.cls019}
+          iconWrapClass={styles.cls098}
+          iconClass={styles.cls066}
+        />
+        <StatCard
+          label="Pending Review"
+          value={counts.pending}
+          icon={Clock}
+          cardClass={styles.cls022}
+          labelClass={styles.cls023}
+          valueClass={styles.cls024}
+          iconWrapClass={styles.cls025}
+          iconClass={styles.cls021}
+        />
+        <StatCard
+          label="Under Review"
+          value={counts.reviewed}
+          icon={Eye}
+          cardClass={styles.cls067}
+          labelClass={styles.cls068}
+          valueClass={styles.cls069}
+          iconWrapClass={styles.cls070}
+          iconClass={styles.cls021}
+        />
+        <StatCard
+          label="Resolved"
+          value={counts.resolved}
+          icon={CheckCircle}
+          cardClass={styles.cls026}
+          labelClass={styles.cls027}
+          valueClass={styles.cls028}
+          iconWrapClass={styles.cls029}
+          iconClass={styles.cls021}
+        />
       </div>
 
       <div className={styles.cls030}>
@@ -284,20 +300,10 @@ export function FeedbackManagement() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveStatus(tab.key)}
-                className={[
-                  "inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all",
-                  isActive
-                    ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200"
-                    : "text-gray-600 hover:bg-white/70 hover:text-gray-900",
-                ].join(" ")}
+                className={getFilterTabClass(isActive)}
               >
-                <span>{tab.label}</span>
-                <span
-                  className={[
-                    "inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                    isActive ? "bg-gray-100 text-gray-700" : "bg-gray-200 text-gray-600",
-                  ].join(" ")}
-                >
+                {tab.label}
+                <span className={getFilterTabCountClass(isActive)}>
                   {tab.count}
                 </span>
               </button>
@@ -310,9 +316,9 @@ export function FeedbackManagement() {
         <div className={styles.cls033}>
           <Table>
             <TableHeader className={styles.cls034}>
-              <TableRow>
+              <TableRow className={styles.cls077}>
                 <TableHead className={styles.cls035}>Report ID</TableHead>
-                <TableHead className={styles.cls035}>Dish Name</TableHead>
+                <TableHead className={styles.cls035}>Dish</TableHead>
                 <TableHead className={styles.cls035}>User Email</TableHead>
                 <TableHead className={styles.cls035}>Status</TableHead>
                 <TableHead className={styles.cls035}>Submitted</TableHead>
@@ -325,45 +331,44 @@ export function FeedbackManagement() {
                   <TableCell colSpan={6} className={styles.cls037}>
                     <span className={styles.cls038}>
                       <Loader2 className={styles.cls039} />
-                      Loading feedback reports...
+                      Loading reports…
                     </span>
                   </TableCell>
                 </TableRow>
               ) : filteredReports.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className={styles.cls037}>
-                    No reports found.
+                    <div className={styles.cls078}>
+                      <FileText className={styles.cls079} />
+                      <span>No reports found</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredReports.map((report) => (
                   <TableRow key={report.reportID} className={styles.cls040}>
-                    <TableCell className={styles.cls041}>{report.reportID}</TableCell>
+                    <TableCell className={styles.cls041}>
+                      <span className={styles.cls080}>
+                        {report.reportID}
+                      </span>
+                    </TableCell>
                     <TableCell className={styles.cls041}>{report.dishName}</TableCell>
                     <TableCell className={styles.cls042}>{report.userEmail}</TableCell>
-                    <TableCell>
-                      <div className={styles.cls043}>
-                        {getStatusIcon(report.status)}
-                        <span
-                          className={`px-2 py-1 rounded text-xs border ${getStatusColor(report.status)}`}
-                        >
-                          {report.status}
-                        </span>
-                      </div>
+                    <TableCell className={styles.cls081}>
+                      <StatusPill status={report.status} />
                     </TableCell>
                     <TableCell className={styles.cls042}>
                       {formatDate(report.submittedAt)}
                     </TableCell>
                     <TableCell className={styles.cls044}>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
+                        type="button"
                         onClick={() => handleViewReport(report)}
                         className={styles.cls045}
                       >
                         <Eye className={styles.cls046} />
                         View
-                      </Button>
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -371,103 +376,99 @@ export function FeedbackManagement() {
             </TableBody>
           </Table>
         </div>
+
+        {!loading && filteredReports.length > 0 && (
+          <div className={styles.cls099}>
+            <p className={styles.cls100}>
+              Showing <span className={styles.cls101}>{filteredReports.length}</span> of{" "}
+              <span className={styles.cls101}>{reports.length}</span> reports
+            </p>
+          </div>
+        )}
       </div>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className={styles.cls047}>
-          <DialogHeader>
-            <DialogTitle className={styles.cls048}>
-              <div className={styles.cls049}>
-                <AlertCircle className={styles.cls050} />
-              </div>
-              <div>
-                <div className={styles.cls051}>Issue Report</div>
-                <div className={styles.cls052}>ID: {selectedReport?.reportID || "-"}</div>
-              </div>
-            </DialogTitle>
-            <DialogDescription className={styles.cls053}>
-              Detailed information about the reported issue
-            </DialogDescription>
-          </DialogHeader>
+          <div className={styles.cls082}>
+            <DialogHeader>
+              <DialogTitle className={styles.cls048}>
+                <div className={styles.cls049}>
+                  <AlertCircle className={styles.cls050} />
+                </div>
+                <div>
+                  <div className={styles.cls051}>Issue Report</div>
+                  <div className={styles.cls052}>
+                    ID: <span className={styles.cls083}>{selectedReport?.reportID || "—"}</span>
+                  </div>
+                </div>
+              </DialogTitle>
+              <DialogDescription className={styles.cls053}>
+                Detailed information about the reported issue
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          {detailsLoading && (
-            <div className={styles.cls054}>
-              <span className={styles.cls038}>
-                <Loader2 className={styles.cls039} />
-                Loading report details...
-              </span>
-            </div>
-          )}
+          <div className={styles.cls084}>
+            {detailsLoading && (
+              <div className={styles.cls054}>
+                <span className={styles.cls038}>
+                  <Loader2 className={styles.cls039} />
+                  Loading report details…
+                </span>
+              </div>
+            )}
 
-          {!detailsLoading && selectedReport && (
-            <div className={styles.cls055}>
-              <div>
-                <p className={styles.cls056}>Status</p>
-                <div className={styles.cls043}>
-                  {getStatusIcon(selectedReport.status)}
-                  <span
-                    className={`px-3 py-2 rounded text-sm border ${getStatusColor(selectedReport.status)}`}
+            {!detailsLoading && selectedReport && (
+              <div className={styles.cls055}>
+
+                <div className={styles.cls085}>
+                  <p className={styles.cls056}>Current Status</p>
+                  <StatusPill status={selectedReport.status} size="md" />
+                </div>
+
+                <div className={styles.cls057}>
+                  <DetailField label="User Email"  value={selectedReport.userEmail} />
+                  <DetailField label="User ID"     value={selectedReport.userID} />
+                  <DetailField label="Dish Name"   value={selectedReport.dishName} />
+                  <DetailField label="Dish ID"     value={selectedReport.dishID} />
+                  <DetailField label="Submitted At" value={formatDate(selectedReport.submittedAt)} span />
+                </div>
+                <div>
+                  <p className={styles.cls056}>Report Message</p>
+                  <div className={styles.cls061}>
+                    <p className={styles.cls062}>
+                      {selectedReport.reportMessage || "No detailed message provided."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.cls063}>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus("reviewed")}
+                    disabled={
+                      updatingStatus ||
+                      selectedReport.status === "reviewed" ||
+                      selectedReport.status === "resolved"
+                    }
+                    className={styles.cls064}
                   >
-                    {selectedReport.status}
-                  </span>
+                    <Eye className={styles.cls046} />
+                    {updatingStatus ? "Updating…" : "Mark as Reviewed"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus("resolved")}
+                    disabled={updatingStatus || selectedReport.status === "resolved"}
+                    className={styles.cls065}
+                  >
+                    <CheckCircle className={styles.cls046} />
+                    {updatingStatus ? "Updating…" : "Mark as Resolved"}
+                  </button>
                 </div>
               </div>
-
-              <div className={styles.cls057}>
-                <div>
-                  <p className={styles.cls058}>User Email</p>
-                  <p className={styles.cls059}>{selectedReport.userEmail}</p>
-                </div>
-                <div>
-                  <p className={styles.cls058}>User ID</p>
-                  <p className={styles.cls059}>{selectedReport.userID}</p>
-                </div>
-                <div>
-                  <p className={styles.cls058}>Dish Name</p>
-                  <p className={styles.cls059}>{selectedReport.dishName}</p>
-                </div>
-                <div>
-                  <p className={styles.cls058}>Dish ID</p>
-                  <p className={styles.cls059}>{selectedReport.dishID}</p>
-                </div>
-                <div className={styles.cls060}>
-                  <p className={styles.cls058}>Submitted At</p>
-                  <p className={styles.cls059}>{formatDate(selectedReport.submittedAt)}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className={styles.cls056}>Report Message</p>
-                <div className={styles.cls061}>
-                  <p className={styles.cls062}>
-                    {selectedReport.reportMessage || "No detailed message provided."}
-                  </p>
-                </div>
-              </div>
-
-              <div className={styles.cls063}>
-                <Button
-                  variant="outline"
-                  className={styles.cls064}
-                  onClick={() => handleUpdateStatus("reviewed")}
-                  disabled={
-                    updatingStatus ||
-                    selectedReport.status === "reviewed" ||
-                    selectedReport.status === "resolved"
-                  }
-                >
-                  {updatingStatus ? "Updating..." : "Mark as Reviewed"}
-                </Button>
-                <Button
-                  className={styles.cls065}
-                  onClick={() => handleUpdateStatus("resolved")}
-                  disabled={updatingStatus || selectedReport.status === "resolved"}
-                >
-                  {updatingStatus ? "Updating..." : "Mark as Resolved"}
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -475,5 +476,3 @@ export function FeedbackManagement() {
 }
 
 export default FeedbackManagement;
-
-

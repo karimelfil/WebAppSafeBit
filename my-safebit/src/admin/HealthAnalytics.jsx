@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   TrendingUp,
@@ -7,37 +7,121 @@ import {
   Heart,
   Check,
   Loader2,
+  ShieldCheck,
+  X,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Alert, AlertDescription } from "../components/ui/alert";
 import { getHealthAnalytics } from "../services/adminHealthAnalyticsService";
-import { styles } from '../styles/admin/HealthAnalytics.styles.js';
-const insightStyles = {
-  primary: "from-blue-50 to-blue-100 border-blue-200 text-blue-900 text-blue-800",
-  warning:
-    "from-orange-50 to-orange-100 border-orange-200 text-orange-900 text-orange-800",
-  info: "from-purple-50 to-purple-100 border-purple-200 text-purple-900 text-purple-800",
-  success:
-    "from-green-50 to-green-100 border-green-200 text-green-900 text-green-800",
-};
+import {
+  styles,
+  getSkeletonClass,
+  getStatIconWrapClass,
+  getStatIconClass,
+  getStatValueClass,
+  getProgressFillClass,
+  getProgressWidthStyle,
+  getChartHeightStyle,
+  getLegendSwatchClass,
+  getInsightCardClass,
+  getInsightDotClass,
+  getInsightIconClass,
+  getInsightTitleClass,
+  getInsightBodyClass,
+} from "../styles/admin/HealthAnalytics.styles";
 
+//convert number to percentage string
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
+
+// Reusable skeleton component for loading states
+function Skeleton({ className }) {
+  return <div className={getSkeletonClass(className)} />;
+}
+
+// Section title component with optional subtitle
+function SectionTitle({ children, sub }) {
+  return (
+    <div className={styles.sectionTitleWrap}>
+      <h3 className={styles.sectionTitle}>{children}</h3>
+      {sub && <p className={styles.sectionSub}>{sub}</p>}
+    </div>
+  );
+}
+
+// Card component to display key statistics with an icon, value, and description
+function StatCard({ label, value, sub, icon: Icon, tone, loading }) {
+  return (
+    <div className={styles.statCard}>
+      <div className={getStatIconWrapClass(tone)}>
+        <Icon className={getStatIconClass(tone)} />
+      </div>
+      <div className={styles.statBody}>
+        <p className={styles.statLabel}>{label}</p>
+        {loading ? (
+          <Skeleton className={styles.statValueSkeleton} />
+        ) : (
+          <p className={getStatValueClass(tone)}>{value}</p>
+        )}
+        {loading ? (
+          <Skeleton className={styles.statSubSkeleton} />
+        ) : (
+          <p className={styles.statSub}>{sub}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Row component to display progress bars for allergy/disease statistics
+function ProgressRow({ name, affectedUsers, percent, tone }) {
+  const pct = Math.min(100, Math.max(0, percent));
+
+  return (
+    <div className={styles.progressRow}>
+      <div className={styles.progressTop}>
+        <span className={styles.progressName}>{name}</span>
+        <div className={styles.progressMeta}>
+          <span className={styles.progressUsers}>{affectedUsers.toLocaleString()} users</span>
+          <span className={styles.progressPercent}>{formatPercent(percent)}</span>
+        </div>
+      </div>
+      <div className={styles.progressTrack}>
+        <div className={getProgressFillClass(tone)} style={getProgressWidthStyle(pct)} />
+      </div>
+    </div>
+  );
+}
+
+// Bar component for the health data trends chart, showing allergies and diseases per month
+function ChartBar({ month, allergies, diseases, maxVal }) {
+  const allergyPct = maxVal > 0 ? (allergies / maxVal) * 100 : 0;
+  const diseasePct = maxVal > 0 ? (diseases / maxVal) * 100 : 0;
+
+  return (
+    <div className={styles.chartBarGroup}>
+      <div className={styles.chartTooltip}>
+        <span className={styles.chartTooltipAllergies}>{allergies}</span>
+        <span className={styles.chartTooltipSeparator}> - </span>
+        <span className={styles.chartTooltipDiseases}>{diseases}</span>
+        <div className={styles.chartTooltipArrow} />
+      </div>
+      <div className={`${styles.chartBars} ${styles.chartBarsTall}`}>
+        <div className={styles.allergyBar} style={getChartHeightStyle(allergyPct)} />
+        <div className={styles.diseaseBar} style={getChartHeightStyle(diseasePct)} />
+      </div>
+      <span className={styles.chartMonth}>{month}</span>
+    </div>
+  );
+}
 
 export function HealthAnalytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Fetch health analytics data on component mount
   useEffect(() => {
     let mounted = true;
 
-    const load = async () => {
+    (async () => {
       setLoading(true);
       setError("");
       try {
@@ -55,275 +139,208 @@ export function HealthAnalytics() {
       } finally {
         if (mounted) setLoading(false);
       }
-    };
+    })();
 
-    load();
     return () => {
       mounted = false;
     };
   }, []);
 
+  // Calculate the maximum value for the trends chart to normalize bar heights
   const maxTrendValue = useMemo(() => {
     if (!analytics?.healthDataTrends?.length) return 1;
     return Math.max(
       1,
-      ...analytics.healthDataTrends.map((x) => Math.max(x.allergies, x.diseases))
+      ...analytics.healthDataTrends.map((item) =>
+        Math.max(item.allergies, item.diseases)
+      )
     );
   }, [analytics]);
 
   return (
-    <div className={styles.cls001}>
-      <div>
-        <h2 className={styles.cls002}>Health Analytics Dashboard</h2>
-        <p className={styles.cls003}>Anonymized health statistics and trends</p>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h2 className={styles.title}>Health Analytics</h2>
+          <p className={styles.subtitle}>Anonymized health statistics and trends</p>
+        </div>
+        <div className={styles.privacyBadge}>
+          <ShieldCheck className={styles.privacyIcon} />
+          All data is anonymized &amp; aggregated
+        </div>
       </div>
 
-      <Alert className={styles.cls004}>
-        <AlertDescription className={styles.cls005}>
-          <strong>Privacy Protected:</strong> All data shown is anonymized and aggregated.
-        </AlertDescription>
-      </Alert>
-
-      {loading && (
-        <Card>
-          <CardContent className={styles.cls006}>
-            <div className={styles.cls007}>
-              <Loader2 className={styles.cls008} />
-              <span className={styles.cls009}>Loading health analytics...</span>
-            </div>
-          </CardContent>
-        </Card>
+      {error && (
+        <div className={styles.errorBanner}>
+          <AlertTriangle className={styles.errorIcon} />
+          <p className={styles.errorText}>{error}</p>
+          <button onClick={() => setError("")} className={styles.errorDismiss}>
+            <X className={styles.errorDismissIcon} />
+          </button>
+        </div>
       )}
 
-      {!!error && (
-        <Alert className={styles.cls010}>
-          <AlertTriangle className={styles.cls011} />
-          <AlertDescription className={styles.cls012}>{error}</AlertDescription>
-        </Alert>
+      <div className={styles.statsGrid}>
+        <StatCard
+          label="Total Users"
+          icon={Users}
+          tone="blue"
+          value={analytics ? analytics.totalUsers.toLocaleString() : "-"}
+          sub="Active platform users"
+          loading={loading}
+        />
+        <StatCard
+          label="Users with Allergies"
+          icon={AlertTriangle}
+          tone="amber"
+          value={analytics ? analytics.usersWithAllergies.toLocaleString() : "-"}
+          sub={
+            analytics
+              ? `${formatPercent(analytics.usersWithAllergiesPercent)} of total`
+              : "-"
+          }
+          loading={loading}
+        />
+        <StatCard
+          label="Users with Conditions"
+          icon={Heart}
+          tone="purple"
+          value={analytics ? analytics.usersWithDiseases.toLocaleString() : "-"}
+          sub={
+            analytics
+              ? `${formatPercent(analytics.usersWithDiseasesPercent)} of total`
+              : "-"
+          }
+          loading={loading}
+        />
+        <StatCard
+          label="Monthly Growth"
+          icon={TrendingUp}
+          tone="emerald"
+          value={analytics ? formatPercent(analytics.monthlyGrowthPercent) : "-"}
+          sub="Health tracking engagement"
+          loading={loading}
+        />
+      </div>
+
+      {loading && !analytics && (
+        <div className={styles.loadingState}>
+          <Loader2 className={styles.loadingIcon} />
+          <span className={styles.loadingText}>Loading health analytics...</span>
+        </div>
       )}
 
-      {!!analytics && !loading && (
+      {analytics && !loading && (
         <>
-          <div className={styles.cls013}>
-            <Card className={styles.cls014}>
-              <CardContent className={styles.cls015}>
-                <div className={styles.cls016}>
-                  <div>
-                    <p className={styles.cls017}>Total Users</p>
-                    <p className={styles.cls018}>
-                      {analytics.totalUsers.toLocaleString()}
-                    </p>
-                    <p className={styles.cls019}>Active platform users</p>
-                  </div>
-                  <div className={styles.cls020}>
-                    <Users className={styles.cls021} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className={styles.splitGrid}>
+            <div className={styles.panel}>
+              <SectionTitle sub="Anonymized user counts per allergy type">
+                Allergy Statistics
+              </SectionTitle>
+              <div className={styles.dividedList}>
+                {analytics.detailedAllergyStatistics.map((item) => (
+                  <ProgressRow
+                    key={item.allergyID}
+                    name={item.name}
+                    affectedUsers={item.affectedUsers}
+                    percent={item.percentOfTotalUsers}
+                    tone="amber"
+                  />
+                ))}
+                {analytics.detailedAllergyStatistics.length === 0 && (
+                  <p className={styles.emptyText}>No allergy data available.</p>
+                )}
+              </div>
+            </div>
 
-            <Card className={styles.cls022}>
-              <CardContent className={styles.cls015}>
-                <div className={styles.cls016}>
-                  <div>
-                    <p className={styles.cls023}>Users with Allergies</p>
-                    <p className={styles.cls024}>
-                      {analytics.usersWithAllergies.toLocaleString()}
-                    </p>
-                    <p className={styles.cls025}>
-                      {formatPercent(analytics.usersWithAllergiesPercent)} of total users
-                    </p>
-                  </div>
-                  <div className={styles.cls026}>
-                    <AlertTriangle className={styles.cls021} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={styles.cls027}>
-              <CardContent className={styles.cls015}>
-                <div className={styles.cls016}>
-                  <div>
-                    <p className={styles.cls028}>Users with Diseases</p>
-                    <p className={styles.cls029}>
-                      {analytics.usersWithDiseases.toLocaleString()}
-                    </p>
-                    <p className={styles.cls030}>
-                      {formatPercent(analytics.usersWithDiseasesPercent)} of total users
-                    </p>
-                  </div>
-                  <div className={styles.cls031}>
-                    <Heart className={styles.cls021} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={styles.cls032}>
-              <CardContent className={styles.cls015}>
-                <div className={styles.cls016}>
-                  <div>
-                    <p className={styles.cls033}>Monthly Growth</p>
-                    <p className={styles.cls034}>
-                      {formatPercent(analytics.monthlyGrowthPercent)}
-                    </p>
-                    <p className={styles.cls035}>Health tracking engagement</p>
-                  </div>
-                  <div className={styles.cls036}>
-                    <TrendingUp className={styles.cls021} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className={styles.panel}>
+              <SectionTitle sub="Percentage of users affected by chronic conditions">
+                Disease Distribution
+              </SectionTitle>
+              <div className={styles.dividedList}>
+                {analytics.diseaseDistribution.map((item) => (
+                  <ProgressRow
+                    key={item.diseaseID}
+                    name={item.name}
+                    affectedUsers={item.affectedUsers}
+                    percent={item.percentOfTotalUsers}
+                    tone="violet"
+                  />
+                ))}
+                {analytics.diseaseDistribution.length === 0 && (
+                  <p className={styles.emptyText}>No disease data available.</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className={styles.cls037}>
-            <Card>
-              <CardHeader className={styles.cls038}>
-                <CardTitle className={styles.cls039}>
-                  Detailed Allergy Statistics
-                </CardTitle>
-                <CardDescription className={styles.cls009}>
-                  Anonymized user counts per allergy type
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className={styles.cls040}>
-                  {analytics.detailedAllergyStatistics.map((item) => (
-                    <div
-                      key={item.allergyID}
-                      className={styles.cls041}
-                    >
-                      <div className={styles.cls042}>
-                        <p className={styles.cls043}>{item.name}</p>
-                        <p className={styles.cls044}>
-                          {item.affectedUsers.toLocaleString()} affected users
-                        </p>
-                      </div>
-                      <p className={styles.cls045}>
-                        {formatPercent(item.percentOfTotalUsers)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <div className={styles.trendPanel}>
+            <SectionTitle sub="Monthly growth in reported allergies and conditions">
+              Health Data Trends
+            </SectionTitle>
 
-            <Card>
-              <CardHeader className={styles.cls038}>
-                <CardTitle className={styles.cls039}>
-                  Disease Distribution
-                </CardTitle>
-                <CardDescription className={styles.cls009}>
-                  Percentage of users affected by chronic diseases
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className={styles.cls040}>
-                  {analytics.diseaseDistribution.map((item) => (
-                    <div key={item.diseaseID} className={styles.cls046}>
-                      <div className={styles.cls047}>
-                        <p className={styles.cls043}>{item.name}</p>
-                        <div className={styles.cls048}>
-                          <span className={styles.cls044}>
-                            {item.affectedUsers.toLocaleString()} users
-                          </span>
-                          <span className={styles.cls045}>
-                            {formatPercent(item.percentOfTotalUsers)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className={styles.cls049}>
-                        <div
-                          className={styles.cls050}
-                          style={{ width: `${Math.min(100, Math.max(0, item.percentOfTotalUsers))}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+            <div className={`${styles.chartWrap} ${styles.chartWrapTall}`}>
+              {analytics.healthDataTrends.map((month) => (
+                <ChartBar
+                  key={month.month}
+                  month={month.month}
+                  allergies={month.allergies}
+                  diseases={month.diseases}
+                  maxVal={maxTrendValue}
+                />
+              ))}
+            </div>
+
+            <div className={styles.legend}>
+              <div className={styles.legendItem}>
+                <span className={getLegendSwatchClass("allergies")} />
+                <span className={styles.legendText}>Allergies</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={getLegendSwatchClass("conditions")} />
+                <span className={styles.legendText}>Conditions</span>
+              </div>
+            </div>
+
+            <div className={styles.trendGrid}>
+              {analytics.healthDataTrends.map((month) => (
+                <div key={`point-${month.month}`} className={styles.trendCard}>
+                  <p className={styles.trendMonth}>{month.month}</p>
+                  <p className={styles.trendAllergy}>{month.allergies}</p>
+                  <p className={styles.trendLabel}>allergies</p>
+                  <p className={styles.trendDisease}>{month.diseases}</p>
+                  <p className={styles.trendLabel}>conditions</p>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className={styles.cls039}>Health Data Trends</CardTitle>
-              <CardDescription>Monthly growth in reported allergies and diseases</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className={styles.cls040}>
-                <div className={styles.cls051}>
-                  {analytics.healthDataTrends.map((month) => (
-                    <div key={month.month} className={styles.cls052}>
-                      <div className={styles.cls053}>
-                        <div
-                          className={styles.cls054}
-                          style={{ height: `${(month.allergies / maxTrendValue) * 90}%` }}
-                        />
-                        <div
-                          className={styles.cls055}
-                          style={{ height: `${(month.diseases / maxTrendValue) * 90}%` }}
-                        />
-                      </div>
-                      <span className={styles.cls044}>{month.month}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className={styles.cls056}>
-                  <div className={styles.cls048}>
-                    <div className={styles.cls057} />
-                    <span className={styles.cls058}>Allergies</span>
+          <div className={styles.panel}>
+            <SectionTitle sub="Important observations from aggregated health data">
+              Key Insights &amp; Trends
+            </SectionTitle>
+            <div className={styles.insightsGrid}>
+              {analytics.keyInsights.map((insight, index) => (
+                <div
+                  key={`${insight.title}-${index}`}
+                  className={getInsightCardClass(insight.type)}
+                >
+                  <div className={styles.insightHeader}>
+                    <span className={getInsightDotClass(insight.type)}>
+                      <Check className={getInsightIconClass(insight.type)} />
+                    </span>
+                    <p className={getInsightTitleClass(insight.type)}>
+                      {insight.title}
+                    </p>
                   </div>
-                  <div className={styles.cls048}>
-                    <div className={styles.cls059} />
-                    <span className={styles.cls058}>Diseases</span>
-                  </div>
+                  <p className={getInsightBodyClass(insight.type)}>{insight.message}</p>
                 </div>
-
-                <div className={styles.cls060}>
-                  {analytics.healthDataTrends.map((month) => (
-                    <div key={`point-${month.month}`} className={styles.cls061}>
-                      <p className={styles.cls062}>{month.month}</p>
-                      <p className={styles.cls043}>{month.allergies}</p>
-                      <p className={styles.cls063}>allergies</p>
-                      <p className={styles.cls064}>{month.diseases}</p>
-                      <p className={styles.cls063}>diseases</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className={styles.cls039}>Key Insights & Trends</CardTitle>
-              <CardDescription>Important observations from aggregated health data</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className={styles.cls065}>
-                {analytics.keyInsights.map((insight, index) => {
-                  const cls = insightStyles[insight.type] || insightStyles.info;
-                  const parts = cls.split(" ");
-                  return (
-                    <div
-                      key={`${insight.title}-${index}`}
-                      className={`p-4 bg-gradient-to-br ${parts[0]} ${parts[1]} border ${parts[2]} rounded-lg`}
-                    >
-                      <div className={styles.cls066}>
-                        <Check className={`h-4 w-4 ${parts[3]}`} />
-                        <p className={`text-sm font-medium ${parts[3]}`}>{insight.title}</p>
-                      </div>
-                      <p className={`text-xs ${parts[4]}`}>{insight.message}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+              {analytics.keyInsights.length === 0 && (
+                <p className={styles.insightsEmpty}>No insights available.</p>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>
@@ -331,5 +348,3 @@ export function HealthAnalytics() {
 }
 
 export default HealthAnalytics;
-
-

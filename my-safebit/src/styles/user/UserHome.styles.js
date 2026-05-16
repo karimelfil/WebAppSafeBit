@@ -1,72 +1,122 @@
-﻿export const styles = {
-  cls001: 'min-h-screen bg-gray-50 flex',
-  cls002: 'flex-1',
-  cls003: 'p-6',
-  cls004: 'h-16 bg-white border-b px-6 flex items-center justify-between',
-  cls005: 'leading-tight',
-  cls006: 'text-sm text-gray-500',
-  cls007: 'text-lg font-semibold text-gray-900',
-  cls008: 'rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800',
-  cls009: 'w-72 min-h-screen bg-white border-r flex flex-col',
-  cls010: 'h-16 px-5 flex items-center gap-3 border-b',
-  cls011: 'h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center',
-  cls012: 'h-5 w-5 text-emerald-600',
-  cls013: 'font-semibold text-gray-900',
-  cls014: 'text-xs text-gray-500',
-  cls015: 'p-3 space-y-1',
-  cls016: 'font-medium',
-  cls017: 'mt-auto p-3 border-t',
-  cls018: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50',
-  cls019: 'h-4 w-4',
-  cls020: 'space-y-6',
-  cls021: 'relative bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl p-6 md:p-8 text-white overflow-hidden',
-  cls022: 'absolute inset-0 opacity-10',
-  cls023: 'absolute top-0 right-0 w-64 h-64 bg-white rounded-full -mr-32 -mt-32',
-  cls024: 'absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full -ml-24 -mb-24',
-  cls025: 'relative z-10 max-w-3xl',
-  cls026: 'flex items-center gap-2 mb-2',
-  cls027: 'h-5 w-5 text-yellow-300',
-  cls028: 'text-3xl font-bold leading-tight',
-  cls029: 'text-emerald-50 mb-6 text-sm md:text-base',
-  cls030: 'h-10 px-4 rounded-xl bg-white hover:bg-white shadow-sm text-sm font-semibold !text-[#00bc8a] hover:!text-[#00bc8a] [&_svg]:!text-[#00bc8a]',
-  cls031: 'h-4 w-4 mr-2',
-  cls032: 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm rounded-2xl',
-  cls033: 'h-4 w-4 text-amber-600',
-  cls034: 'text-amber-900',
-  cls035: 'space-y-1',
-  cls036: 'font-semibold',
-  cls037: 'text-amber-800',
-  cls038: 'text-sm text-amber-700 mt-2',
-  cls039: 'border border-gray-200 shadow-sm rounded-2xl',
-  cls040: 'flex items-center gap-2',
-  cls041: 'grid grid-cols-1 md:grid-cols-3 gap-4',
-  cls042: 'w-full justify-start items-start h-auto py-5 px-4 rounded-2xl border border-emerald-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 transition-all',
-  cls043: 'bg-emerald-100 p-3 rounded-xl mr-4 shrink-0',
-  cls044: 'text-left',
-  cls045: 'text-xs text-gray-500 mt-1',
-  cls046: 'w-full justify-start items-start h-auto py-5 px-4 rounded-2xl border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-200 transition-all',
-  cls047: 'bg-blue-100 p-3 rounded-xl mr-4 shrink-0',
-  cls048: 'h-5 w-5 text-blue-600',
-  cls049: 'w-full justify-start items-start h-auto py-5 px-4 rounded-2xl border border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-200 transition-all',
-  cls050: 'bg-purple-100 p-3 rounded-xl mr-4 shrink-0',
-  cls051: 'h-5 w-5 text-purple-600',
-  cls052: 'shadow-sm rounded-2xl border border-gray-200',
-  cls053: 'flex items-center justify-between',
-  cls054: 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl',
-  cls055: 'space-y-3',
-  cls056: 'flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:border-emerald-200 hover:shadow-sm transition-all',
-  cls057: 'font-medium text-gray-900',
-  cls058: 'flex items-center gap-4',
-  cls059: 'text-xs text-gray-500 font-medium',
-  cls060: 'flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-200',
-  cls061: 'text-xs font-medium',
-  cls062: 'flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-full border border-red-200',
-  cls063: 'bg-white border border-gray-200 shadow-sm rounded-2xl',
-  cls064: 'space-y-4',
-  cls065: 'p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl shadow-sm',
-  cls066: 'text-sm text-blue-900 font-medium',
-  cls067: 'p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-2xl shadow-sm',
-  cls068: 'text-sm text-emerald-900 font-medium',
-  cls069: 'p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-2xl shadow-sm',
-  cls070: 'text-sm text-amber-900 font-medium',
+export const styles = {
+  page: "space-y-6",
+  hero:
+    "relative bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl p-6 md:p-8 text-white overflow-hidden",
+  heroOverlay: "absolute inset-0 opacity-10 pointer-events-none",
+  heroBubbleTop: "absolute top-0 right-0 w-64 h-64 bg-white rounded-full -mr-32 -mt-32",
+  heroBubbleBottom:
+    "absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full -ml-24 -mb-24",
+  heroContent: "relative z-10 max-w-3xl",
+  heroTitleRow: "flex items-center gap-2 mb-2",
+  heroIcon: "h-5 w-5 text-yellow-300",
+  heroTitle: "text-2xl md:text-3xl font-bold leading-tight",
+  heroDescription: "text-emerald-50 mb-6 text-sm md:text-base",
+  heroButton:
+    "h-10 px-4 rounded-xl bg-white hover:bg-white shadow-sm text-sm font-semibold !text-[#00bc8a] hover:!text-[#00bc8a] [&_svg]:!text-[#00bc8a]",
+  heroButtonIcon: "h-4 w-4 mr-2",
+  smallIcon: "h-4 w-4",
+  skeleton: "bg-gray-200 rounded animate-pulse",
+  heroTitleSkeleton: "h-7 w-52 bg-white/30",
+  chipSkeletonShort: "h-6 w-16",
+  chipSkeletonMedium: "h-6 w-20",
+  chipSkeletonLong: "h-6 w-24",
+  pregnancySkeleton: "h-6 w-32",
+  recentScanTitleSkeleton: "h-4 w-32",
+  recentScanDateSkeleton: "h-3 w-20",
+  recentScanPillSkeleton: "h-7 w-16 rounded-full",
+  cardGrid: "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4",
+  infoCard: "border border-gray-200 shadow-sm rounded-2xl",
+  infoHeader: "pb-3",
+  infoTitle: "flex items-center gap-2 text-sm font-semibold",
+  badgeWrap: "h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0",
+  allergiesBadge: "bg-red-50",
+  diseasesBadge: "bg-amber-50",
+  pregnancyBadge: "bg-pink-50",
+  allergiesIcon: "h-4 w-4 text-red-500",
+  diseasesIcon: "h-4 w-4 text-amber-500",
+  pregnancyIcon: "h-4 w-4 text-pink-400",
+  chipList: "flex flex-wrap gap-1.5",
+  emptyText: "text-xs text-gray-400 italic",
+  allergyChip:
+    "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200",
+  diseaseChip:
+    "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200",
+  pregnantChip:
+    "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200",
+  quickActionsCard: "border border-gray-200 shadow-sm rounded-2xl",
+  quickActionsTitle: "flex items-center gap-2",
+  quickActionsIcon: "h-5 w-5 text-emerald-600",
+  quickActionsGrid: "grid grid-cols-1 md:grid-cols-3 gap-4",
+  actionCard:
+    "w-full justify-start items-start h-auto py-5 px-4 rounded-2xl bg-white transition-all",
+  actionUpload: "border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300",
+  actionHistory: "border border-gray-200 hover:bg-blue-50 hover:border-blue-200",
+  actionProfile: "border border-gray-200 hover:bg-purple-50 hover:border-purple-200",
+  actionIconBox: "p-3 rounded-xl mr-4 shrink-0",
+  actionUploadIconBox: "bg-emerald-100",
+  actionHistoryIconBox: "bg-blue-100",
+  actionProfileIconBox: "bg-purple-100",
+  actionUploadIcon: "h-5 w-5 text-emerald-600",
+  actionHistoryIcon: "h-5 w-5 text-blue-600",
+  actionProfileIcon: "h-5 w-5 text-purple-600",
+  actionText: "text-left",
+  actionTitle: "font-semibold text-gray-900",
+  actionBody: "text-xs text-gray-500 mt-1",
+  scansCard: "shadow-sm rounded-2xl border border-gray-200",
+  scansHeader: "flex items-center justify-between",
+  viewAllButton: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl",
+  scansList: "space-y-3",
+  scanRow:
+    "flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:border-emerald-200 hover:shadow-sm transition-all",
+  scanRowStatic: "flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200",
+  scanMeta: "space-y-1.5",
+  scanTitle: "font-medium text-gray-900",
+  scanBody: "text-xs text-gray-500 mt-0.5",
+  scanRight: "flex items-center gap-4",
+  scanDate: "text-xs text-gray-500 font-medium hidden sm:block",
+  warningPill:
+    "flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-full border border-red-200",
+  safePill:
+    "flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-200",
+  pillText: "text-xs font-medium",
+  tipsCard: "bg-white border border-gray-200 shadow-sm rounded-2xl",
+  tipsTitle: "flex items-center gap-2",
+  tipsList: "space-y-4",
+  tipPrimary: "p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl shadow-sm",
+  tipPrimaryText: "text-sm text-blue-900 font-medium",
+  tipSuccess:
+    "p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-2xl shadow-sm",
+  tipSuccessText: "text-sm text-emerald-900 font-medium",
+  tipWarning: "p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-2xl shadow-sm",
+  tipWarningText: "text-sm text-amber-900 font-medium",
 };
+
+export const getActionCardClass = (variant) =>
+  `${styles.actionCard} ${
+    variant === "upload"
+      ? styles.actionUpload
+      : variant === "history"
+        ? styles.actionHistory
+        : styles.actionProfile
+  }`;
+
+export const getActionIconBoxClass = (variant) =>
+  `${styles.actionIconBox} ${
+    variant === "upload"
+      ? styles.actionUploadIconBox
+      : variant === "history"
+        ? styles.actionHistoryIconBox
+        : styles.actionProfileIconBox
+  }`;
+
+export const getSkeletonClass = (className = "") =>
+  `${styles.skeleton} ${className}`.trim();
+
+export const getBadgeWrapClass = (variant) =>
+  `${styles.badgeWrap} ${
+    variant === "allergies"
+      ? styles.allergiesBadge
+      : variant === "diseases"
+        ? styles.diseasesBadge
+        : styles.pregnancyBadge
+  }`;

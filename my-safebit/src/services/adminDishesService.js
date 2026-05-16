@@ -1,10 +1,12 @@
 ﻿import { http } from "./http";
 
+//transform to string and trim
 const toNonEmptyString = (value) => {
   if (value == null) return "";
   return String(value).trim();
 };
 
+// Resolves the details ID for a dish using various possible fields and formats
 const resolveDetailsId = (dish) => {
   const explicit = dish?.dishId ?? dish?.id;
   if (typeof explicit === "number") return String(explicit);
@@ -19,6 +21,7 @@ const resolveDetailsId = (dish) => {
   return digits ? digits[0] : "";
 };
 
+// Normalizes dish data from the API to a consistent format for the frontend
 const normalizeDish = (dish) => ({
   id: String(dish?.dishID ?? dish?.dishId ?? dish?.id ?? ""),
   detailsId: resolveDetailsId(dish),
@@ -28,6 +31,7 @@ const normalizeDish = (dish) => ({
   uploadedAt: dish?.uploadDate ?? dish?.uploadedAt ?? null,
 });
 
+//search for ingredient name in various possible fields and formats
 const extractIngredientName = (item) => {
   if (typeof item === "string") return toNonEmptyString(item);
   if (!item || typeof item !== "object") return "";
@@ -48,6 +52,7 @@ const extractIngredientName = (item) => {
   );
 };
 
+// Utility function to pick the first array from a list of candidates
 const pickFirstArray = (candidates) => {
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) return candidate;
@@ -55,6 +60,7 @@ const pickFirstArray = (candidates) => {
   return [];
 };
 
+// Normalizes the API response for dish ingredients to a consistent format for the frontend
 const normalizeIngredientsPayload = (data) => {
   const source = pickFirstArray([
     data,
@@ -85,11 +91,13 @@ const normalizeIngredientsPayload = (data) => {
   };
 };
 
+// Service functions to interact with the backend API for admin dish management
 export async function getAllDishesAdmin() {
   const res = await http.get("/DishesAdmin");
   return (Array.isArray(res.data) ? res.data : []).map(normalizeDish);
 }
 
+// Fetches the list of ingredients for a specific dish by ID
 export async function getDishIngredients(dishId) {
   const res = await http.get(`/DishesAdmin/${encodeURIComponent(dishId)}/ingredients`);
   return normalizeIngredientsPayload(res.data);

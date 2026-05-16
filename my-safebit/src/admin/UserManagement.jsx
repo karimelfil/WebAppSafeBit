@@ -1,104 +1,148 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { styles } from '../styles/admin/UserManagement.styles.js';
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import {
+  styles,
+  getStatusPillClass,
+  getStatusDotClass,
+  getIconButtonClass,
+  getSuspendToneWrapClass,
+  getSuspendToneIconClass,
+  getSuspendActionButtonClass,
+} from "../styles/admin/UserManagement.styles.js";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "../components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle,
 } from "../components/ui/dialog";
-import { Badge } from "../components/ui/badge";
 import {
-  Search, Eye, Edit, Ban, Check, AlertTriangle, Users, UserCheck, UserX,
+  Search, Eye, Edit, Ban, Check, AlertTriangle,
+  Users, UserCheck, UserX, Loader2,
 } from "lucide-react";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { Label } from "../components/ui/label";
-
 import {
-  getAllUsers,
-  getUserById,
-  updateUser,
-  suspendUser,
-  reactivateUser,
+  getAllUsers, getUserById, updateUser, suspendUser, reactivateUser,
 } from "../services/adminUserService";
 
-const statusClasses = (status) =>
-  status === "active"
-    ? "bg-green-100 text-green-800 border border-green-200"
-    : "bg-red-100 text-red-800 border border-red-200";
+//transform data to more visible format
+const fmtDate = (v) =>
+  v ? new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+//transform data to more visible format with time
+const fmtDateTime = (v) =>
+  v ? new Date(v).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+
+//get the error message from the api response or fallback to a default message
+const getAxiosMsg = (err, fallback) => {
+  if (!axios.isAxiosError(err)) return fallback;
+  const d = err.response?.data;
+  if (d && typeof d === "object" && d.errors) {
+    const k = Object.keys(d.errors)[0];
+    const v = d.errors[k];
+    return Array.isArray(v) ? v[0] : String(v);
+  }
+  const msg = d?.message || d || err.message;
+  return typeof msg === "string" ? msg : fallback;
+};
+
+// Component to display user status with appropriate styling
+function StatusPill({ status }) {
+  const active = status === "active";
+  return (
+    <span className={getStatusPillClass(active)}>
+      <span className={getStatusDotClass(active)} />
+      {active ? "Active" : "Suspended"}
+    </span>
+  );
+}
 
 
-const dialogPanel =
-  "bg-white text-gray-900 border border-gray-200 shadow-xl rounded-xl " +
-  "sm:max-w-2xl w-full";
+// Component to display a label and value pair in user details view
+function DetailField({ label, value, span }) {
+  return (
+    <div className={span ? styles.cls039 : ""}>
+      <p className={styles.cls093}>{label}</p>
+      <p className={styles.cls094}>{value || "—"}</p>
+    </div>
+  );
+}
+// Component to display a statistic card with an icon, label, and value
+function StatCard({ label, value, icon: Icon, cardCls, valueCls, wrapCls, iconCls }) {
+  return (
+    <div className={cardCls}>
+      <div className={styles.cls010}>
+        <div>
+          <p className={styles.cls011}>{label}</p>
+          <p className={valueCls}>{value}</p>
+        </div>
+        <div className={wrapCls}>
+          <Icon className={iconCls} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const dialogLabel = "text-xs font-medium text-gray-600";
-const dialogValue = "text-sm text-gray-800 mt-1";
+// Reusable button component for action icons in the user table for details , active and reactive actions 
+function IconButton({ onClick, title, tone, children }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={getIconButtonClass(tone)}
+    >
+      {children}
+    </button>
+  );
+}
 
-
-const dialogSectionTitle = "text-sm font-medium text-gray-900";
-
-
+// Simple spinner component using the Loader2 icon for loading states
+function Spinner() {
+  return <Loader2 className={styles.cls044} />;
+}
 
 export function UserManagement() {
+  //Max 10 users per page
   const PAGE_SIZE = 10;
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState(null);
-
+  // State variables for user data, loading states, errors, search term, pagination, selected user details, view modes, and action feedback
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [listError, setListError]   = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [selectedUser, setSelectedUser] = useState(null);
-  const [viewMode, setViewMode] = useState(null);
-
+  const [viewMode, setViewMode]     = useState(null);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
-
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]         = useState(false);
   const [actionError, setActionError] = useState(null);
 
+  // Fetches the list of users when the component mounts and handles loading and error states
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    (async () => {
       setLoading(true);
       setListError(null);
       try {
         const data = await getAllUsers();
         if (!cancelled) setUsers(data);
       } catch (err) {
-        console.error(err);
-        if (!cancelled) {
-          const msg =
-            (axios.isAxiosError(err) &&
-              (err.response?.data?.message || err.response?.data || err.message)) ||
-            "Failed to load users.";
-          setListError(typeof msg === "string" ? msg : "Failed to load users.");
-        }
+        if (!cancelled) setListError(getAxiosMsg(err, "Failed to load users."));
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const suspendedUsers = users.filter((u) => u.status === "suspended").length;
+  //stats for the top cards
+  const totalUsers     = users.length;
+  const activeUsers    = useMemo(() => users.filter((u) => u.status === "active").length,    [users]);
+  const suspendedUsers = useMemo(() => users.filter((u) => u.status === "suspended").length, [users]);
 
+  //serach for users by name, email or id
   const filteredUsers = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return users;
@@ -110,99 +154,63 @@ export function UserManagement() {
     );
   }, [searchTerm, users]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
-
+  //pagination logic
+  const totalPages    = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredUsers.slice(start, start + PAGE_SIZE);
   }, [currentPage, filteredUsers]);
 
+  // Reset to first page when search term changes 
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
+    if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
+  //show toast message for 4 seconds
   const toast = (msg) => {
     setSuccessMessage(msg);
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+    setTimeout(() => setSuccessMessage(""), 4000);
   };
 
-  const handleViewUser = async (rowUser) => {
+  //open detail dialog 
+  const openDetail = async (user, mode) => {
     setActionError(null);
     try {
-      const detail = await getUserById(rowUser.id);
+      const detail = await getUserById(user.id);
       setSelectedUser(detail);
-      setViewMode("view");
+      setViewMode(mode);
     } catch (err) {
-      console.error(err);
-      const msg =
-        (axios.isAxiosError(err) &&
-          (err.response?.data?.message || err.response?.data || err.message)) ||
-        "Failed to load user details.";
-      setActionError(typeof msg === "string" ? msg : "Failed to load user details.");
+      setActionError(getAxiosMsg(err, "Failed to load user details."));
     }
   };
 
-  const handleEditUser = async (rowUser) => {
-    setActionError(null);
-    try {
-      const detail = await getUserById(rowUser.id);
-      setSelectedUser(detail);
-      setViewMode("edit");
-    } catch (err) {
-      console.error(err);
-      const msg =
-        (axios.isAxiosError(err) &&
-          (err.response?.data?.message || err.response?.data || err.message)) ||
-        "Failed to load user details.";
-      setActionError(typeof msg === "string" ? msg : "Failed to load user details.");
-    }
-  };
-
-  const handleSuspendUser = (rowUser) => {
-    setSelectedUser({
-      ...rowUser,
-    });
+  //put the user in the selected list and open the suspend dialog
+  const handleSuspendUser = (user) => {
+    setSelectedUser({ ...user });
     setShowSuspendDialog(true);
   };
 
+  //confirm the suspend or reactivate action and update the user list accordingly
   const confirmSuspend = async () => {
     if (!selectedUser?.id) return;
     setSaving(true);
     setActionError(null);
     try {
-      if (selectedUser.status === "active") {
-        await suspendUser(selectedUser.id);
-      } else {
-        await reactivateUser(selectedUser.id);
-      }
+      if (selectedUser.status === "active") await suspendUser(selectedUser.id);
+      else                                   await reactivateUser(selectedUser.id);
 
+      const newStatus = selectedUser.status === "active" ? "suspended" : "active";
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === selectedUser.id
-            ? { ...u, status: selectedUser.status === "active" ? "suspended" : "active" }
-            : u
-        )
+        prev.map((u) => u.id === selectedUser.id ? { ...u, status: newStatus } : u)
       );
-
       toast(
-        selectedUser.status === "active"
-          ? `User ${selectedUser.email || selectedUser.displayName || selectedUser.id} has been suspended successfully.`
-          : `User ${selectedUser.email || selectedUser.displayName || selectedUser.id} has been reactivated successfully.`
+        newStatus === "suspended"
+          ? `${selectedUser.email || selectedUser.id} has been suspended.`
+          : `${selectedUser.email || selectedUser.id} has been reactivated.`
       );
     } catch (err) {
-      console.error(err);
-      const msg =
-        (axios.isAxiosError(err) &&
-          (err.response?.data?.message || err.response?.data || err.message)) ||
-        "Operation failed.";
-      setActionError(typeof msg === "string" ? msg : "Operation failed.");
+      setActionError(getAxiosMsg(err, "Operation failed."));
     } finally {
       setSaving(false);
       setShowSuspendDialog(false);
@@ -210,6 +218,7 @@ export function UserManagement() {
     }
   };
 
+  //save the edited user information and update the user list with the new details
   const handleSaveEdit = async () => {
     if (!selectedUser?.id) return;
     setSaving(true);
@@ -217,50 +226,41 @@ export function UserManagement() {
     try {
       const updated = await updateUser(selectedUser.id, {
         firstName: selectedUser.firstName,
-        lastName: selectedUser.lastName,
-        email: selectedUser.email,
-        phone: selectedUser.phone,
+        lastName:  selectedUser.lastName,
+        email:     selectedUser.email,
+        phone:     selectedUser.phone,
       });
-
       setUsers((prev) =>
         prev.map((u) =>
           u.id === updated.id
             ? {
                 ...u,
-                email: updated.email,
-                displayName:
-                  updated.displayName ||
+                email:       updated.email,
+                displayName: updated.displayName ||
                   [updated.firstName, updated.lastName].filter(Boolean).join(" "),
               }
             : u
         )
       );
-
       toast("User information updated successfully.");
       setViewMode(null);
       setSelectedUser(null);
     } catch (err) {
-      console.error(err);
-      const data = axios.isAxiosError(err) ? err.response?.data : null;
-      if (data && typeof data === "object" && data.errors) {
-        const firstErrField = Object.keys(data.errors)[0];
-        const firstErrMsg = Array.isArray(data.errors[firstErrField])
-          ? data.errors[firstErrField][0]
-          : String(data.errors[firstErrField]);
-        setActionError(firstErrMsg || "Update failed.");
-      } else {
-        const msg =
-          (axios.isAxiosError(err) && (data?.message || data || err.message)) ||
-          "Update failed.";
-        setActionError(typeof msg === "string" ? msg : "Update failed.");
-      }
+      setActionError(getAxiosMsg(err, "Update failed."));
     } finally {
       setSaving(false);
     }
   };
 
+  
+  const displayName = (u) =>
+    u.displayName ||
+    [u.firstName, u.lastName].filter(Boolean).join(" ") ||
+    "—";
+
   return (
     <div className={styles.cls001}>
+
       <div className={styles.cls002}>
         <div>
           <h2 className={styles.cls003}>User Management</h2>
@@ -268,8 +268,9 @@ export function UserManagement() {
         </div>
         <div className={styles.cls005}>
           <Search className={styles.cls006} />
-          <Input
-            placeholder="Search users..."
+          <input
+            type="text"
+            placeholder="Search by name, email or ID…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.cls007}
@@ -278,136 +279,122 @@ export function UserManagement() {
       </div>
 
       <div className={styles.cls008}>
-        <div className={styles.cls009}>
-          <div className={styles.cls010}>
-            <div>
-              <p className={styles.cls011}>Total Users</p>
-              <p className={styles.cls012}>{totalUsers}</p>
-            </div>
-            <div className={styles.cls013}>
-              <Users className={styles.cls014} />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.cls009}>
-          <div className={styles.cls010}>
-            <div>
-              <p className={styles.cls011}>Active Users</p>
-              <p className={styles.cls015}>{activeUsers}</p>
-            </div>
-            <div className={styles.cls016}>
-              <UserCheck className={styles.cls017} />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.cls009}>
-          <div className={styles.cls010}>
-            <div>
-              <p className={styles.cls011}>Suspended Users</p>
-              <p className={styles.cls018}>{suspendedUsers}</p>
-            </div>
-            <div className={styles.cls019}>
-              <UserX className={styles.cls020} />
-            </div>
-          </div>
-        </div>
+        <StatCard
+          label="Total Users" value={totalUsers} icon={Users}
+          cardCls={styles.cls009} valueCls={styles.cls012}
+          wrapCls={styles.cls013} iconCls={styles.cls014}
+        />
+        <StatCard
+          label="Active Users" value={activeUsers} icon={UserCheck}
+          cardCls={styles.cls100}
+          valueCls={styles.cls015} wrapCls={styles.cls016} iconCls={styles.cls017}
+        />
+        <StatCard
+          label="Suspended" value={suspendedUsers} icon={UserX}
+          cardCls={styles.cls101}
+          valueCls={styles.cls018} wrapCls={styles.cls019} iconCls={styles.cls020}
+        />
       </div>
 
       {listError && (
-        <Alert className={styles.cls021}>
+        <div className={styles.cls021}>
           <AlertTriangle className={styles.cls022} />
-          <AlertDescription className={styles.cls023}>{listError}</AlertDescription>
-        </Alert>
+          <span className={styles.cls023}>{listError}</span>
+        </div>
       )}
       {actionError && (
-        <Alert className={styles.cls021}>
+        <div className={styles.cls021}>
           <AlertTriangle className={styles.cls022} />
-          <AlertDescription className={styles.cls023}>{actionError}</AlertDescription>
-        </Alert>
+          <span className={styles.cls023}>{actionError}</span>
+        </div>
       )}
-      {showSuccessMessage && (
-        <Alert className={styles.cls024}>
+      {successMessage && (
+        <div className={styles.cls024}>
           <Check className={styles.cls025} />
-          <AlertDescription className={styles.cls026}>
-            {successMessage}
-          </AlertDescription>
-        </Alert>
+          <span className={styles.cls026}>{successMessage}</span>
+        </div>
       )}
 
       <div className={styles.cls027}>
         <div className={styles.cls028}>
           <Table>
-            <TableHeader>
+            <TableHeader className={styles.cls060}>
               <TableRow>
-                <TableHead>User ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Registered</TableHead>
-                <TableHead className={styles.cls029}>Actions</TableHead>
+                {["User ID", "Name", "Email", "Status", "Registered"].map((h) => (
+                  <TableHead key={h} className={styles.cls059}>
+                    {h}
+                  </TableHead>
+                ))}
+                <TableHead className={`${styles.cls059} ${styles.cls029}`}>
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
-                    <div className={styles.cls030}>Loading usersâ€¦</div>
+                  <TableCell colSpan={6} className={styles.cls030}>
+                    <span className={styles.cls050}>
+                      <Loader2 className={styles.cls051} />
+                      Loading users…
+                    </span>
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
-                    <div className={styles.cls030}>No users found.</div>
+                  <TableCell colSpan={6} className={styles.cls030}>
+                    <div className={styles.cls052}>
+                      <Users className={styles.cls053} />
+                      <span>No users found</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 paginatedUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
-                    <TableCell>
-                      {user.displayName ||
-                        [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-                        "â€”"}
+                  <TableRow key={user.id} className={styles.cls054}>
+                    <TableCell className={styles.cls055}>
+                      <span className={styles.cls056}>
+                        {user.id}
+                      </span>
                     </TableCell>
-                    <TableCell>{user.email || "â€”"}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`px-2.5 py-0.5 rounded-full text-xs capitalize ${statusClasses(
-                          user.status
-                        )}`}
-                      >
-                        {user.status}
-                      </Badge>
+                    <TableCell className={styles.cls057}>
+                      {displayName(user)}
                     </TableCell>
-                    <TableCell>
-                      {user.registeredAt
-                        ? new Date(user.registeredAt).toLocaleDateString()
-                        : "â€”"}
+                    <TableCell className={styles.cls058}>
+                      {user.email || "—"}
                     </TableCell>
-                    <TableCell className={styles.cls029}>
+                    <TableCell className={styles.cls055}>
+                      <StatusPill status={user.status} />
+                    </TableCell>
+                    <TableCell className={styles.cls058}>
+                      {fmtDate(user.registeredAt)}
+                    </TableCell>
+                    <TableCell className={`${styles.cls055} ${styles.cls029}`}>
                       <div className={styles.cls031}>
-                        <Button size="sm" variant="ghost" onClick={() => handleViewUser(user)}>
-                          <Eye className={styles.cls032} />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleEditUser(user)}>
-                          <Edit className={styles.cls032} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleSuspendUser(user)}
-                          className={
-                            user.status === "suspended" ? "text-green-600" : "text-red-600"
-                          }
+                        <IconButton
+                          title="View details"
+                          onClick={() => openDetail(user, "view")}
+                          tone="blue"
                         >
-                          {user.status === "suspended" ? (
-                            <Check className={styles.cls032} />
-                          ) : (
-                            <Ban className={styles.cls032} />
-                          )}
-                        </Button>
+                          <Eye className={styles.cls032} />
+                        </IconButton>
+                        <IconButton
+                          title="Edit user"
+                          onClick={() => openDetail(user, "edit")}
+                          tone="amber"
+                        >
+                          <Edit className={styles.cls032} />
+                        </IconButton>
+                        <IconButton
+                          title={user.status === "active" ? "Suspend user" : "Reactivate user"}
+                          onClick={() => handleSuspendUser(user)}
+                          tone={user.status === "suspended" ? "emerald" : "red"}
+                        >
+                          {user.status === "suspended"
+                            ? <Check className={styles.cls032} />
+                            : <Ban  className={styles.cls032} />}
+                        </IconButton>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -416,292 +403,210 @@ export function UserManagement() {
             </TableBody>
           </Table>
         </div>
+
         {!loading && filteredUsers.length > 0 && (
           <div className={styles.cls033}>
             <p className={styles.cls004}>
-              Showing {(currentPage - 1) * PAGE_SIZE + 1}
-              {" - "}
-              {Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
-              {" of "}
-              {filteredUsers.length}
+              Showing{" "}
+              <span className={styles.cls061}>
+                {(currentPage - 1) * PAGE_SIZE + 1}–
+                {Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
+              </span>{" "}
+              of{" "}
+              <span className={styles.cls061}>{filteredUsers.length}</span> users
             </p>
             <div className={styles.cls034}>
-              <Button
-                size="sm"
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
+                className={styles.cls062}
               >
                 Previous
-              </Button>
+              </button>
               <span className={styles.cls035}>
                 Page {currentPage} of {totalPages}
               </span>
-              <Button
-                size="sm"
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
+                className={styles.cls062}
               >
                 Next
-              </Button>
+              </button>
             </div>
           </div>
         )}
       </div>
 
       <Dialog open={viewMode === "view"} onOpenChange={() => setViewMode(null)}>
-        <DialogContent className={dialogPanel}>
-          <DialogHeader>
-            <DialogTitle className={styles.cls036}>User Details</DialogTitle>
-            <DialogDescription className={styles.cls004}>
-              View personal information 
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className={styles.cls068}>
+          <div className={styles.cls069}>
+            <DialogHeader>
+              <DialogTitle className={styles.cls036}>User Details</DialogTitle>
+              <DialogDescription className={styles.cls004}>
+                Personal information for this account
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
           {selectedUser && (
-            <div className={styles.cls037}>
-              <div>
-                <div className={dialogLabel}>User ID</div>
-                <p className={dialogValue}>{selectedUser.id}</p>
-              </div>
-              <div>
-                <div className={dialogLabel}>Status</div>
-                <div className={styles.cls038}>
-                  <Badge
-                    className={`px-2.5 py-0.5 rounded-full text-xs capitalize ${statusClasses(
-                      selectedUser.status
-                    )}`}
-                  >
-                    {selectedUser.status}
-                  </Badge>
-                </div>
+            <div className={styles.cls070}>
+              <div className={styles.cls071}>
+                <p className={styles.cls072}>Account Status</p>
+                <StatusPill status={selectedUser.status} />
               </div>
 
-              <div>
-                <div className={dialogLabel}>First Name</div>
-                <p className={dialogValue}>{selectedUser.firstName || "â€”"}</p>
+              <div className={styles.cls037}>
+                <DetailField label="User ID"    value={selectedUser.id}        />
+                <DetailField label="Registered" value={fmtDateTime(selectedUser.registeredAt)} />
+                <DetailField label="First Name" value={selectedUser.firstName} />
+                <DetailField label="Last Name"  value={selectedUser.lastName}  />
+                <DetailField label="Email"      value={selectedUser.email}     />
+                <DetailField label="Phone"      value={selectedUser.phone}     />
+                <DetailField label="Date of Birth" value={fmtDate(selectedUser.dob)} />
+                <DetailField label="Gender"     value={selectedUser.gender}    />
               </div>
-              <div>
-                <div className={dialogLabel}>Last Name</div>
-                <p className={dialogValue}>{selectedUser.lastName || "â€”"}</p>
-              </div>
-
-              <div>
-                <div className={dialogLabel}>Email</div>
-                <p className={dialogValue}>{selectedUser.email || "â€”"}</p>
-              </div>
-              <div>
-                <div className={dialogLabel}>Phone</div>
-                <p className={dialogValue}>{selectedUser.phone || "â€”"}</p>
-              </div>
-
-              <div>
-                <div className={dialogLabel}>Date of Birth</div>
-                <p className={dialogValue}>
-                  {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString() : "â€”"}
-                </p>
-              </div>
-              <div>
-                <div className={dialogLabel}>Gender</div>
-                <p className={dialogValue}>{selectedUser.gender || "â€”"}</p>
-              </div>
-
-              <div className={styles.cls039}>
-                <div className={dialogLabel}>Registered At</div>
-                <p className={dialogValue}>
-                  {selectedUser.registeredAt
-                    ? new Date(selectedUser.registeredAt).toLocaleString()
-                    : "â€”"}
-                </p>
-              </div>
-
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewMode(null)}>
+          <div className={styles.cls073}>
+            <button
+              type="button"
+              onClick={() => setViewMode(null)}
+              className={styles.cls074}
+            >
               Close
-            </Button>
-          </DialogFooter>
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={viewMode === "edit"} onOpenChange={() => setViewMode(null)}>
-        <DialogContent className={dialogPanel}>
-          <DialogHeader>
-            <DialogTitle className={styles.cls036}>Edit User Information</DialogTitle>
-            <DialogDescription className={styles.cls004}>
-              Update user's personal details
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className={styles.cls068}>
+          <div className={styles.cls069}>
+            <DialogHeader>
+              <DialogTitle className={styles.cls036}>Edit User Information</DialogTitle>
+              <DialogDescription className={styles.cls004}>
+                Update this user's personal details
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
           {selectedUser && (
-            <div className={styles.cls037}>
-              <div className={styles.cls040}>
-                <div className={dialogLabel}>First Name</div>
-                <Input
-                  value={selectedUser.firstName ?? ""}
-                  onChange={(e) =>
-                    setSelectedUser({ ...selectedUser, firstName: e.target.value })
-                  }
-                  className={styles.cls041}
-                />
+            <div className={styles.cls070}>
+              <div className={styles.cls037}>
+                {[
+                  { label: "First Name", key: "firstName" },
+                  { label: "Last Name",  key: "lastName"  },
+                  { label: "Email",      key: "email"     },
+                  { label: "Phone",      key: "phone"     },
+                ].map(({ label, key }) => (
+                  <div key={key} className={styles.cls040}>
+                    <label className={styles.cls063}>
+                      {label}
+                    </label>
+                    <input
+                      value={selectedUser[key] ?? ""}
+                      onChange={(e) =>
+                        setSelectedUser({ ...selectedUser, [key]: e.target.value })
+                      }
+                      className={styles.cls064}
+                    />
+                  </div>
+                ))}
               </div>
-              <div className={styles.cls040}>
-                <div className={dialogLabel}>Last Name</div>
-                <Input
-                  value={selectedUser.lastName ?? ""}
-                  onChange={(e) =>
-                    setSelectedUser({ ...selectedUser, lastName: e.target.value })
-                  }
-                  className={styles.cls041}
-                />
-              </div>
-              <div className={styles.cls040}>
-                <div className={dialogLabel}>Email</div>
-                <Input
-                  value={selectedUser.email ?? ""}
-                  onChange={(e) =>
-                    setSelectedUser({ ...selectedUser, email: e.target.value })
-                  }
-                  className={styles.cls041}
-                />
-              </div>
-              <div className={styles.cls040}>
-                <div className={dialogLabel}>Phone</div>
-                <Input
-                  value={selectedUser.phone ?? ""}
-                  onChange={(e) =>
-                    setSelectedUser({ ...selectedUser, phone: e.target.value })
-                  }
-                  className={styles.cls041}
-                />
-              </div>
+
+              {actionError && (
+                <div className={styles.cls065}>
+                  <AlertTriangle className={styles.cls066} />
+                  <p className={styles.cls067}>{actionError}</p>
+                </div>
+              )}
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewMode(null)}>
+          <div className={styles.cls075}>
+            <button
+              type="button"
+              onClick={() => setViewMode(null)}
+              className={styles.cls074}
+            >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleSaveEdit}
               disabled={saving}
               className={styles.cls042}
             >
-              {saving ? (
-                <span className={styles.cls043}>
-                  <svg
-                    className={styles.cls044}
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className={styles.cls045}
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className={styles.cls046}
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  Savingâ€¦
-                </span>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </DialogFooter>
+              {saving
+                ? <span className={styles.cls043}><Spinner /> Saving…</span>
+                : "Save Changes"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
-        <DialogContent className={dialogPanel}>
-          <DialogHeader>
-            <DialogTitle className={styles.cls034}>
-              <AlertTriangle className={styles.cls047} />
-              {selectedUser?.status === "active"
-                ? "Suspend User Account"
-                : "Reactivate User Account"}
-            </DialogTitle>
-            <DialogDescription className={styles.cls004}>
-              {selectedUser?.status === "active"
-                ? "Are you sure you want to suspend this user account? The user will not be able to log in until reactivated."
-                : "Are you sure you want to reactivate this user account?"}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className={styles.cls068}>
+          <div className={styles.cls069}>
+            <DialogHeader>
+              <DialogTitle className={styles.cls076}>
+                <div className={getSuspendToneWrapClass(selectedUser?.status === "active")}>
+                  <AlertTriangle className={getSuspendToneIconClass(selectedUser?.status === "active")} />
+                </div>
+                {selectedUser?.status === "active" ? "Suspend User Account" : "Reactivate User Account"}
+              </DialogTitle>
+              <DialogDescription className={styles.cls082}>
+                {selectedUser?.status === "active"
+                  ? "The user will not be able to log in until reactivated."
+                  : "The user will regain full access to their account."}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
           {selectedUser && (
-            <div className={styles.cls048}>
-              <div>
-                <span className={dialogSectionTitle}>User: </span>
-                <span className={styles.cls049}>
-                  {selectedUser.displayName || selectedUser.id}
-                </span>
-              </div>
-              <div>
-                <span className={dialogSectionTitle}>Email: </span>
-                <span className={styles.cls049}>
-                  {selectedUser.email || "â€”"}
-                </span>
+            <div className={styles.cls070}>
+              <div className={styles.cls048}>
+                <div className={styles.cls083}>
+                  <p className={styles.cls072}>Name</p>
+                  <p className={styles.cls049}>{displayName(selectedUser)}</p>
+                </div>
+                <div className={styles.cls083}>
+                  <p className={styles.cls072}>Email</p>
+                  <p className={styles.cls049}>{selectedUser.email || "—"}</p>
+                </div>
+                <div className={styles.cls083}>
+                  <p className={styles.cls072}>Current Status</p>
+                  <StatusPill status={selectedUser.status} />
+                </div>
               </div>
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSuspendDialog(false)}>
+          <div className={styles.cls075}>
+            <button
+              type="button"
+              onClick={() => setShowSuspendDialog(false)}
+              className={styles.cls074}
+            >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={confirmSuspend}
               disabled={saving}
-              className={
-                selectedUser?.status === "active"
-                  ? "bg-red-600 hover:bg-red-700 disabled:opacity-70"
-                  : "bg-green-600 hover:bg-green-700 disabled:opacity-70"
-              }
+              className={getSuspendActionButtonClass(selectedUser?.status === "active")}
             >
-              {saving ? (
-                <span className={styles.cls043}>
-                  <svg
-                    className={styles.cls044}
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className={styles.cls045}
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className={styles.cls046}
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  Processing...
-                </span>
-              ) : selectedUser?.status === "active" ? (
-                "Suspend Account"
-              ) : (
-                "Reactivate Account"
-              )}
-            </Button>
-          </DialogFooter>
+              {saving
+                ? <span className={styles.cls043}><Spinner />Processing…</span>
+                : selectedUser?.status === "active" ? "Suspend Account" : "Reactivate Account"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-
-

@@ -1,11 +1,13 @@
 import axios from "axios";
 import { http } from "./http";
 
+//convert string to number, if not a valid number return 0
 const toNumber = (value) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 };
 
+//pick the first non-null, non-undefined value from the object based on the provided keys
 const pickFirst = (obj, keys, fallback = null) => {
   for (const key of keys) {
     const value = obj?.[key];
@@ -14,19 +16,23 @@ const pickFirst = (obj, keys, fallback = null) => {
   return fallback;
 };
 
+//convert value to trimmed string, if not a string return empty string
 const toText = (value) => {
   if (typeof value !== "string") return "";
   return value.trim();
 };
+
 
 const toTokenLabel = (value) =>
   toText(value)
     .replaceAll("_", " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
+//normalize a value that can be either a string or an array of strings into an array of trimmed strings
 const normalizeStringList = (value) =>
   Array.isArray(value) ? value.map(toText).filter(Boolean) : [];
 
+//extract analysis from dish object using multiple possible keys and fallback strategies
 const extractDishAnalysis = (dish) => {
   const directAnalysis = [
     "Analysis",
@@ -48,6 +54,7 @@ const extractDishAnalysis = (dish) => {
 
   if (directAnalysis) return directAnalysis;
 
+  // If no direct analysis found, look for conflicts and notes as potential sources of analysis
   const conflicts = pickFirst(dish, ["Conflicts", "conflicts"], []);
   if (Array.isArray(conflicts)) {
     const conflictExplanations = conflicts
@@ -66,14 +73,17 @@ const extractDishAnalysis = (dish) => {
     if (conflictExplanations.length > 0) return conflictExplanations.join(" ");
   }
 
+  // If no conflicts analysis, look for notes as a potential source of analysis
   const notes = normalizeStringList(pickFirst(dish, ["Notes", "notes"], []));
   if (notes.length > 0) {
     return notes.join(" ");
   }
 
+  // If no direct analysis, conflicts, or notes found, look for short summary as a potential source of analysis
   const shortSummary = toText(pickFirst(dish, ["ShortSummary", "shortSummary"], ""));
   if (shortSummary) return shortSummary;
 
+  // If no other analysis found, look for detected triggers as a potential source of analysis
   const detectedTriggers = normalizeStringList(
     pickFirst(dish, ["DetectedTriggers", "detectedTriggers"], [])
   ).map(toTokenLabel);
@@ -84,12 +94,13 @@ const extractDishAnalysis = (dish) => {
   return "";
 };
 
+//extract list of scan history records from API response using multiple possible keys and fallback strategies
 const extractList = (payload) => {
   if (Array.isArray(payload)) return payload;
   const nested = pickFirst(payload, ["history", "scanHistory", "data", "items", "results"], []);
   return Array.isArray(nested) ? nested : [];
 };
-
+//normalize a scan history record from API response using multiple possible keys and fallback strategies
 const normalizeHistoryRecord = (record, index) => ({
   ScanID: pickFirst(record, ["ScanID", "scanID", "scanId", "id", "Id"], index + 1),
   RestaurantName: String(
@@ -103,6 +114,7 @@ const normalizeHistoryRecord = (record, index) => ({
   RiskyCount: toNumber(pickFirst(record, ["RiskyCount", "riskyCount", "warningCount", "warnings", "Warnings"])),
 });
 
+//normalize a dish object from API response using multiple possible keys and fallback strategies
 const normalizeDish = (dish, index) => ({
   DishID: pickFirst(dish, ["DishID", "dishID", "dishId", "id", "Id"], index + 1),
   DishName: String(pickFirst(dish, ["DishName", "dishName", "name", "Name"], `Dish ${index + 1}`)),
@@ -120,6 +132,7 @@ const normalizeDish = (dish, index) => ({
   Analysis: extractDishAnalysis(dish),
 });
 
+//normalize scan details from API response using multiple possible keys and fallback strategies
 const normalizeDetails = (payload) => ({
   ScanID: pickFirst(payload, ["ScanID", "scanID", "scanId", "id", "Id"], null),
   RestaurantName: String(
@@ -138,6 +151,7 @@ const normalizeDetails = (payload) => ({
     : [],
 });
 
+//convert various API error formats into a standardized Error object with a meaningful message
 const toApiError = (error, fallbackMessage) => {
   const apiMessage =
     error?.response?.data?.message ||
@@ -148,6 +162,7 @@ const toApiError = (error, fallbackMessage) => {
   return new Error(apiMessage);
 };
 
+//fetch scan history from API and normalize the response into a list of scan history records
 export async function getScanHistory() {
   try {
     const res = await http.get("/scan/history");
@@ -157,6 +172,7 @@ export async function getScanHistory() {
   }
 }
 
+//fetch scan details by scan ID from API and normalize the response into a structured scan details object
 export async function getScanDetails(scanId) {
   try {
     const res = await http.get(`/scan/${scanId}`);

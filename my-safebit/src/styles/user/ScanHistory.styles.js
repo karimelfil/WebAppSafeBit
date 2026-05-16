@@ -28,6 +28,7 @@ export const styles = {
   cls023: "space-y-4",
   cls024: "rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm",
   cls025: "flex flex-col items-center justify-center gap-4 py-14 text-center",
+  cls112: "h-8 w-8 text-slate-400",
   cls026: "text-lg font-semibold text-slate-900",
   cls027: "text-sm text-slate-500",
   cls028:
@@ -40,6 +41,7 @@ export const styles = {
   cls034: "text-2xl font-semibold tracking-tight text-slate-950",
   cls035: "max-w-3xl text-sm leading-6 text-slate-600",
   cls036: "inline-flex h-11 items-center gap-2 rounded-2xl border-slate-200 px-4 text-slate-700",
+  cls113: "h-4 w-4",
   cls037: "flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4",
   cls038: "space-y-1",
   cls039: "text-xs font-semibold uppercase tracking-[0.16em] text-slate-500",
@@ -113,4 +115,65 @@ export const styles = {
   cls105: "flex items-center gap-3",
   cls106: "flex flex-wrap gap-2",
   cls107: "rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700",
+  cls108: "h-2.5 w-2.5 rounded-full",
+  cls109: "h-4 w-4 animate-spin text-emerald-600",
+  cls110: "mt-2 break-all text-base font-medium text-slate-900",
+  cls111: "rounded-2xl border border-white bg-white px-4 py-3 shadow-sm",
 };
+
+export const statusStyles = {
+  safe: {
+    label: "Safe",
+    iconClass: "h-4 w-4 text-emerald-600",
+    badgeClass:
+      "inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700",
+    panelClass: "border-emerald-200 bg-emerald-50/80",
+    dotClass: "bg-emerald-500",
+    accentClass: "text-emerald-700",
+  },
+  risky: {
+    label: "Risky",
+    iconClass: "h-4 w-4 text-amber-600",
+    badgeClass:
+      "inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700",
+    panelClass: "border-amber-200 bg-amber-50/80",
+    dotClass: "bg-amber-500",
+    accentClass: "text-amber-700",
+  },
+  unsafe: {
+    label: "Unsafe",
+    iconClass: "h-4 w-4 text-rose-600",
+    badgeClass:
+      "inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700",
+    panelClass: "border-rose-200 bg-rose-50/80",
+    dotClass: "bg-rose-500",
+    accentClass: "text-rose-700",
+  },
+  unknown: {
+    label: "Review",
+    iconClass: "h-4 w-4 text-slate-600",
+    badgeClass:
+      "inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700",
+    panelClass: "border-slate-200 bg-slate-50/80",
+    dotClass: "bg-slate-500",
+    accentClass: "text-slate-700",
+  },
+};
+
+export const getStatusMetaStyles = (status) =>
+  statusStyles[String(status || "unknown").toLowerCase()] || statusStyles.unknown;
+
+export const getLoadingIconClass = (tone = "emerald") =>
+  tone === "rose" ? "h-8 w-8 animate-spin text-rose-600" : "h-8 w-8 animate-spin text-emerald-600";
+
+export const getAlertIconClass = (tone = "rose") =>
+  tone === "rose" ? "h-4 w-4 text-rose-600" : "h-4 w-4 text-emerald-600";
+
+export const getStatusBreakdownPanelClass = (status) =>
+  `${styles.cls043} ${getStatusMetaStyles(status).panelClass}`;
+
+export const getStatusDotClass = (status) =>
+  `${styles.cls108} ${getStatusMetaStyles(status).dotClass}`;
+
+export const getDishPanelClass = (status) =>
+  `${styles.cls072} ${getStatusMetaStyles(status).panelClass}`;

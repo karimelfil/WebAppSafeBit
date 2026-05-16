@@ -1,10 +1,12 @@
 import { http } from "./http";
 
+//convert various input formats to a number or null if invalid
 const toNumber = (value) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 };
 
+//search for the first non-null  non-undefined value in the object for the given keys
 const pickFirst = (obj, keys, fallback = null) => {
   for (const key of keys) {
     const value = obj?.[key];
@@ -13,6 +15,7 @@ const pickFirst = (obj, keys, fallback = null) => {
   return fallback;
 };
 
+//transform gender numbers to string
 const normalizeGender = (value) => {
   if (value === null || value === undefined) return "";
   if (typeof value === "number") return value === 1 ? "male" : value === 2 ? "female" : "other";
@@ -24,6 +27,7 @@ const normalizeGender = (value) => {
   return raw;
 };
 
+//normalize catalog items which can be in various formats
 const normalizeCatalogItem = (x, fallbackId) => {
   const id =
     toNumber(
@@ -56,6 +60,7 @@ const normalizeCatalogItem = (x, fallbackId) => {
   return { id, name: name || `Item ${id}` };
 };
 
+//normalize selected items which can be just an ID or a full object
 const normalizeSelectedItem = (x, fallbackId) => {
   if (typeof x === "number" || typeof x === "string") {
     const id = toNumber(x);
@@ -68,6 +73,7 @@ const normalizeSelectedItem = (x, fallbackId) => {
   return normalizeCatalogItem(x, fallbackId);
 };
 
+//normalize profile response which can have various field names and nesting
 const normalizeProfileResponse = (data) => {
   const profile = data?.profile || data?.user || data || {};
   return {
@@ -86,6 +92,7 @@ const normalizeProfileResponse = (data) => {
   };
 };
 
+//normalize health response which can have various field names and nesting
 const normalizeHealthResponse = (data) => {
   const health = data?.health || data || {};
 
@@ -111,6 +118,7 @@ const normalizeHealthResponse = (data) => {
   };
 };
 
+//convert profile patch payload to the expected format with various field names for compatibility
 const toProfilePatchBody = (payload) => ({
   userId: Number(payload.userId),
   UserId: Number(payload.userId),
@@ -135,12 +143,12 @@ const toProfilePatchBody = (payload) => ({
       ? 2
       : payload.gender || null,
 
-  // Compatibility for APIs expecting snake_case.
   first_Name: payload.firstName ?? null,
   last_Name: payload.lastName ?? null,
   date_Of_Birth: payload.dateOfBirth ?? null,
 });
 
+//convert health put payload to the expected format with various field names for compatibility
 const toHealthPutBody = (payload) => ({
   userId: Number(payload.userId),
   UserId: Number(payload.userId),
@@ -152,43 +160,49 @@ const toHealthPutBody = (payload) => ({
   IsPregnant: Boolean(payload.isPregnant),
 });
 
+//get user profile and normalize the response to a consistent format
 export async function getUserProfile(userId) {
   const res = await http.get(`/user/profile/${userId}`);
   return normalizeProfileResponse(res.data);
 }
 
+//patch user profile with flexible payload and return the updated profile
 export async function patchUserProfile(userId, payload) {
   await http.patch(`/user/profile/${userId}`, toProfilePatchBody({ ...payload, userId }));
   return getUserProfile(userId);
 }
 
+//get user health info and normalize the response to a consistent format
 export async function getUserHealth(userId) {
   const res = await http.get(`/user/${userId}/health`);
   return normalizeHealthResponse(res.data);
 }
 
+//put user health info with flexible payload and return the updated health info
 export async function putUserHealth(userId, payload) {
   await http.put(`/user/${userId}/health`, toHealthPutBody({ ...payload, userId }));
   const refreshed = await getUserHealth(userId);
   return {
     ...refreshed,
-    // Keep the explicit UI state even if backend response omits this field.
     isPregnant: Boolean(payload.isPregnant),
   };
 }
 
+//get allergies catalog and normalize items to a consistent format
 export async function getUserAllergiesCatalog() {
   const res = await http.get("/user/allergies");
   const list = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.allergies) ? res.data.allergies : [];
   return list.map((x, idx) => normalizeCatalogItem(x, idx + 1));
 }
 
+//get diseases catalog and normalize items to a consistent format
 export async function getUserDiseasesCatalog() {
   const res = await http.get("/user/diseases");
   const list = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.diseases) ? res.data.diseases : [];
   return list.map((x, idx) => normalizeCatalogItem(x, idx + 1));
 }
 
+//add an allergy to the user profile with flexible payload format
 export async function addUserAllergy(userId, allergyId) {
   await http.post(`/user/${userId}/health/allergies`, {
     userId: Number(userId),
@@ -198,10 +212,12 @@ export async function addUserAllergy(userId, allergyId) {
   });
 }
 
+//remove an allergy from the user profile by allergy ID
 export async function removeUserAllergy(userId, allergyId) {
   await http.delete(`/user/${userId}/health/allergies/${allergyId}`);
 }
 
+//add a disease to the user profile with flexible payload format
 export async function addUserDisease(userId, diseaseId) {
   await http.post(`/user/${userId}/health/diseases`, {
     userId: Number(userId),
@@ -211,10 +227,12 @@ export async function addUserDisease(userId, diseaseId) {
   });
 }
 
+//remove a disease from the user profile by disease ID
 export async function removeUserDisease(userId, diseaseId) {
   await http.delete(`/user/${userId}/health/diseases/${diseaseId}`);
 }
 
+//get a summary of user health info for quick display, response format can vary so we return it as-is
 export async function getUserHealthSummary(userId) {
   const res = await http.get(`/user/${userId}/health/summary`);
   return res.data || {};

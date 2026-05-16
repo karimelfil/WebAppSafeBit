@@ -38,7 +38,7 @@ export const styles = {
   cls037: "text-sm",
   cls038: "px-4 py-2 border-t border-red-100 bg-red-50",
   cls039: "text-xs text-red-600",
-  cls040: "mt-1.5 text-xs text-red-500 leading-snug whitespace-pre-line",
+  cls040: "flex items-center gap-1.5 mt-1.5",
   cls041: "block text-sm font-medium text-gray-700 mb-1.5",
   cls042: "text-red-500 ml-0.5",
   cls043: "text-gray-400 font-normal ml-1",
@@ -123,14 +123,20 @@ export const styles = {
   cls122: "text-gray-400 tabular-nums text-xs font-mono",
   cls123: "h-3.5 w-3.5 text-green-600 flex-shrink-0",
   cls124: "rounded-sm object-cover flex-shrink-0",
+  cls125: "h-3.5 w-3.5 text-red-500 flex-shrink-0",
+  cls126: "text-xs text-red-500 leading-snug whitespace-pre-line",
 };
 
 export const getBorderClass = (hasError) => (hasError ? styles.cls091 : styles.cls092);
 
-export const getInputClass = (hasError) => `${styles.cls002} ${getBorderClass(hasError)}`;
+export const getInputClass = (hasError) =>
+  `${styles.cls002} ${getBorderClass(Boolean(hasError))}`;
 
 export const getStrengthBarClass = (filled, activeClass) =>
   `${styles.cls008} ${filled ? activeClass : styles.cls096}`;
+
+export const getStrengthLabelClass = (toneClass) =>
+  `${styles.cls009} ${toneClass}`;
 
 export const getStrengthRuleIconClass = (met) =>
   `${styles.cls012} ${met ? styles.cls102 : styles.cls103}`;
@@ -144,7 +150,8 @@ export const getYesNoButtonClass = (selected) =>
 export const getSelectTriggerClass = (hasError) =>
   `${styles.cls097} ${hasError ? "border-red-400 bg-red-50/40" : styles.cls092}`;
 
-export const getProgressClass = (active) => `${styles.cls065} ${active ? "bg-green-600" : styles.cls096}`;
+export const getProgressClass = (active) =>
+  `${styles.cls065} ${active ? "bg-green-600" : styles.cls096}`;
 
 export const getSelectableRowClass = (selected) =>
   `${styles.cls035} ${selected ? styles.cls104 : styles.cls105}`;
@@ -152,10 +159,14 @@ export const getSelectableRowClass = (selected) =>
 export const getSelectableTextClass = (selected) =>
   `${styles.cls037} ${selected ? styles.cls106 : styles.cls107}`;
 
-export const getPhoneChevronClass = (open) => `${styles.cls112} ${open ? "rotate-180" : ""}`;
+export const getPhoneChevronClass = (open) =>
+  `${styles.cls112} ${open ? "rotate-180" : ""}`;
 
-export const getPhoneButtonClass = (borderClass) => `${styles.cls109} ${borderClass}`;
+export const getPhoneButtonClass = (borderClass) =>
+  `${styles.cls109} ${borderClass}`;
 
-export const getPhoneInputClass = (borderClass) => `${styles.cls113} ${borderClass}`;
+export const getPhoneInputClass = (borderClass) =>
+  `${styles.cls113} ${borderClass}`;
 
-export const getPhoneOptionClass = (active) => `${styles.cls120} ${active ? "bg-green-50" : "hover:bg-gray-50"}`;
+export const getPhoneOptionClass = (active) =>
+  `${styles.cls120} ${active ? "bg-green-50" : "hover:bg-gray-50"}`;

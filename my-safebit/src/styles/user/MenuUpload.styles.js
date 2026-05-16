@@ -46,17 +46,23 @@
   cls045: 'flex items-center gap-2 mb-3',
   cls046: 'font-semibold text-gray-900',
   cls047: 'w-full bg-gray-200 rounded-full h-2.5 overflow-hidden',
+  cls102: 'h-5 w-5',
+  cls103: 'text-sm md:text-base mb-4',
+  cls104: 'h-2.5 rounded-full transition-all duration-300',
   cls048: 'pb-3',
   cls049: 'text-xl',
   cls050: 'grid grid-cols-1 md:grid-cols-2 gap-4',
+  cls105: 'p-5 rounded-xl border transition-all',
   cls051: 'flex items-start justify-between gap-3',
   cls052: 'font-semibold text-gray-900 text-lg leading-6',
+  cls106: 'mt-3 rounded-lg border px-3 py-2.5 text-sm leading-6',
+  cls107: 'mb-1 text-xs font-semibold uppercase tracking-wide opacity-80',
   cls053: 'mt-4',
   cls054: 'text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2',
   cls055: 'flex flex-wrap gap-2',
   cls056: 'mt-3 px-2 text-gray-600 hover:text-gray-900 hover:bg-white/70',
   cls057: 'h-3.5 w-3.5 mr-1.5',
-  cls058: 'flex-1',
+  cls058: 'h-11 min-w-40',
   cls059: 'space-y-6 max-w-3xl mx-auto',
   cls060: 'rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 md:p-8 shadow-sm text-center',
   cls061: 'text-sm md:text-base text-gray-600 mt-2',
@@ -94,10 +100,60 @@
   cls093: 'h-5 w-5 text-emerald-700',
   cls094: 'text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700',
   cls095: 'mt-2 text-sm leading-7 text-slate-700 md:text-base',
+  cls108: 'min-w-0',
+  cls109: 'break-all text-sm text-slate-600',
   cls096: 'flex flex-col gap-2 md:flex-row md:items-center md:justify-between',
   cls097: 'text-sm text-gray-500',
   cls098: 'flex flex-col gap-3 border-t border-gray-200 px-6 py-4 md:flex-row md:items-center md:justify-between',
   cls099: 'text-sm text-gray-600',
   cls100: 'flex gap-2',
   cls101: 'min-w-24',
+  cls110: 'flex-1',
 };
+
+export const getSafetyIconClass = (safePercentage) =>
+  `${styles.cls102} ${safePercentage >= 40 ? 'text-green-600' : 'text-red-600'}`;
+
+export const getSafetyToneClass = (safePercentage) =>
+  `${styles.cls103} ${
+    safePercentage >= 70 ? 'text-green-700' : safePercentage >= 40 ? 'text-amber-700' : 'text-red-700'
+  }`;
+
+export const getSafetyBarClass = (safePercentage) =>
+  `${styles.cls104} ${
+    safePercentage >= 70 ? 'bg-green-600' : safePercentage >= 40 ? 'bg-amber-500' : 'bg-red-600'
+  }`;
+
+export const getSafetyBarWidthStyle = (safePercentage) => ({
+  width: `${Math.max(0, Math.min(100, safePercentage))}%`,
+});
+
+export const getDishResultCardClass = (dish) =>
+  `${styles.cls105} ${
+    dish.isSafe
+      ? 'border-green-200 bg-green-50/40'
+      : dish.hasWarning
+        ? 'border-yellow-200 bg-yellow-50/40'
+        : 'border-red-200 bg-red-50/40'
+  }`;
+
+export const getDishBadgeClass = (dish) =>
+  dish.isSafe
+    ? 'bg-green-600 text-white hover:bg-green-600'
+    : dish.hasWarning || dish.category === 'risky'
+      ? 'bg-yellow-500 text-white hover:bg-yellow-500'
+      : 'bg-red-600 text-white hover:bg-red-600';
+
+export const getDishAnalysisBoxClass = (dish) =>
+  `${styles.cls106} ${
+    dish.hasWarning ? 'border-yellow-200 bg-white text-yellow-900' : 'border-red-200 bg-white text-red-900'
+  }`;
+
+export const getIngredientChipClass = (dish) =>
+  `inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${
+    dish.isUnsafe
+      ? 'border-red-200 bg-red-50 text-red-700'
+      : dish.hasWarning
+        ? 'border-yellow-200 bg-yellow-50 text-yellow-800'
+        : 'border-gray-200 bg-white text-gray-700'
+  }`;

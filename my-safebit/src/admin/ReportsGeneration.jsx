@@ -1,8 +1,5 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
-import { styles } from '../styles/admin/ReportsGeneration.styles.js';
-import { Button } from "../components/ui/button";
-import { Label } from "../components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,22 +8,6 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import {
   Download,
   FileText,
   Filter,
@@ -34,26 +15,33 @@ import {
   AlertTriangle,
   CalendarDays,
   Layers,
+  X,
+  Loader2,
+  BarChart3,
 } from "lucide-react";
-
+import { exportReport, generateAnalyticsReport } from "../services/adminReportsService";
 import {
-  exportReport,
-  generateAnalyticsReport,
-} from "../services/adminReportsService";
+  styles,
+  getNoticeClass,
+  getNoticeIconClass,
+  getNoticeTextClass,
+  getSummaryChipClass,
+  getTableRowClass,
+  getPercentWidthStyle,
+} from "../styles/admin/ReportsGeneration.styles";
 
+// Constants for report types
 const REPORT_TYPES = [
   { value: "UserDemographics", label: "User Demographics" },
   { value: "AllergyStatistics", label: "Allergy Statistics" },
   { value: "DiseaseStatistics", label: "Disease Statistics" },
-  {
-    value: "MostCommonAllergensInDishes",
-    label: "Most Common Allergens In Dishes",
-  },
+  { value: "MostCommonAllergensInDishes", label: "Most Common Allergens In Dishes" },
   { value: "RestaurantSafetyRatios", label: "Restaurant Safety Ratios" },
   { value: "AppUsageAnalytics", label: "App Usage Analytics" },
   { value: "ScanActivityTrends", label: "Scan Activity Trends" },
 ];
 
+// Constants for date range options
 const DATE_RANGES = [
   { value: "Last7Days", label: "Last 7 Days" },
   { value: "Last30Days", label: "Last 30 Days" },
@@ -62,12 +50,14 @@ const DATE_RANGES = [
   { value: "AllTime", label: "All Time" },
 ];
 
+// Constants for export format options
 const EXPORT_FORMATS = [
-  { value: "PDF", label: "PDF" },
-  { value: "CSV", label: "CSV" },
-  { value: "Excel", label: "Excel" },
+  { value: "PDF", label: "PDF Document" },
+  { value: "CSV", label: "CSV Spreadsheet" },
+  { value: "Excel", label: "Excel Workbook" },
 ];
 
+//get error message from the api
 const getErrorMessage = (err) => {
   const msg =
     (axios.isAxiosError(err) &&
@@ -76,29 +66,101 @@ const getErrorMessage = (err) => {
   return typeof msg === "string" ? msg : "Request failed.";
 };
 
+// Notice component to display success or error messages
+function Notice({ type, text, onDismiss }) {
+  if (!text) return null;
+
+  return (
+    <div className={getNoticeClass(type)}>
+      <span className={getNoticeIconClass(type)}>
+        {type === "error" ? (
+          <AlertTriangle className={styles.noticeAlertIcon} />
+        ) : (
+          <Check className={styles.noticeAlertIcon} />
+        )}
+      </span>
+      <p className={getNoticeTextClass(type)}>{text}</p>
+      <button onClick={onDismiss} className={styles.noticeClose}>
+        <X className={styles.noticeCloseIcon} />
+      </button>
+    </div>
+  );
+}
+
+// SelectField component for dropdown selections in the report configuration
+function SelectField({ label, icon: Icon, value, onValueChange, options }) {
+  return (
+    <div className={styles.fieldWrap}>
+      <label className={styles.fieldLabel}>
+        {Icon && <Icon className={styles.fieldLabelIcon} />}
+        {label}
+      </label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className={styles.selectTrigger}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className={styles.selectContent}>
+          {options.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className={styles.selectItem}
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// SummaryChip component to display a summary of the selected report configuration
+function SummaryChip({ icon: Icon, label, value, color }) {
+  return (
+    <div className={getSummaryChipClass(color)}>
+      <Icon className={styles.summaryIcon} />
+      <div>
+        <p className={styles.summaryLabel}>{label}</p>
+        <p className={styles.summaryValue}>{value}</p>
+      </div>
+    </div>
+  );
+}
+
 export function ReportsGeneration() {
   const [reportType, setReportType] = useState("AllergyStatistics");
   const [dateRange, setDateRange] = useState("Last30Days");
   const [exportFormat, setExportFormat] = useState("PDF");
-
   const [generatedReport, setGeneratedReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Memoized labels for the selected report type, date range, and export format
   const reportTypeLabel = useMemo(
-    () => REPORT_TYPES.find((x) => x.value === reportType)?.label || reportType,
+    () => REPORT_TYPES.find((item) => item.value === reportType)?.label || reportType,
     [reportType]
   );
   const selectedDateRangeLabel = useMemo(
-    () => DATE_RANGES.find((x) => x.value === dateRange)?.label || dateRange,
+    () => DATE_RANGES.find((item) => item.value === dateRange)?.label || dateRange,
     [dateRange]
   );
+  const exportFormatLabel = useMemo(
+    () => EXPORT_FORMATS.find((item) => item.value === exportFormat)?.label || exportFormat,
+    [exportFormat]
+  );
 
-  const handleGenerateReport = async () => {
+  // Function to clear success and error messages
+  const clearNotices = () => {
     setErrorMessage("");
     setSuccessMessage("");
+  };
+
+  // Handler for generating the report based on the selected type and date range
+  const handleGenerateReport = async () => {
+    clearNotices();
     setIsGenerating(true);
     try {
       const report = await generateAnalyticsReport({ reportType, dateRange });
@@ -112,9 +174,9 @@ export function ReportsGeneration() {
     }
   };
 
+  // Handler for exporting the generated report in the selected format
   const handleExportReport = async () => {
-    setErrorMessage("");
-    setSuccessMessage("");
+    clearNotices();
     setIsExporting(true);
     try {
       const { blob, filename } = await exportReport({
@@ -122,17 +184,15 @@ export function ReportsGeneration() {
         dateRange,
         format: exportFormat,
       });
-
-      const fileUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(fileUrl);
-
-      setSuccessMessage(`Report exported successfully as ${filename}.`);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      window.URL.revokeObjectURL(url);
+      setSuccessMessage(`Report exported as ${filename}.`);
     } catch (err) {
       setErrorMessage(getErrorMessage(err));
     } finally {
@@ -141,223 +201,212 @@ export function ReportsGeneration() {
   };
 
   return (
-    <div className={styles.cls001}>
+    <div className={styles.page}>
       <div>
-        <h2 className={styles.cls002}>Generate Reports</h2>
-        <p className={styles.cls003}>
-          Generate analytics reports and export them .
+        <h2 className={styles.title}>Generate Reports</h2>
+        <p className={styles.subtitle}>
+          Build analytics reports and export them in your preferred format.
         </p>
       </div>
 
-      {!!errorMessage && (
-        <Alert className={styles.cls004}>
-          <AlertTriangle className={styles.cls005} />
-          <AlertDescription className={styles.cls006}>{errorMessage}</AlertDescription>
-        </Alert>
-      )}
-      {!!successMessage && (
-        <Alert className={styles.cls007}>
-          <Check className={styles.cls008} />
-          <AlertDescription className={styles.cls009}>{successMessage}</AlertDescription>
-        </Alert>
-      )}
+      <Notice type="error" text={errorMessage} onDismiss={() => setErrorMessage("")} />
+      <Notice
+        type="success"
+        text={successMessage}
+        onDismiss={() => setSuccessMessage("")}
+      />
 
-      <Card className={styles.cls010}>
-        <CardHeader>
-          <CardTitle className={styles.cls011}>
-            <Filter className={styles.cls012} />
-            Report Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className={styles.cls013}>
-          <div className={styles.cls014}>
-            <div className={styles.cls015}>
-              <Label className={styles.cls016}>Report Type</Label>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger className={styles.cls017}>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent className={styles.cls018}>
-                  {REPORT_TYPES.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className={styles.cls019}
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={styles.cls015}>
-              <Label className={styles.cls016}>Date Range</Label>
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className={styles.cls017}>
-                  <SelectValue placeholder="Select date range" />
-                </SelectTrigger>
-                <SelectContent className={styles.cls018}>
-                  {DATE_RANGES.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className={styles.cls019}
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={styles.cls015}>
-              <Label className={styles.cls016}>Export Format</Label>
-              <Select value={exportFormat} onValueChange={setExportFormat}>
-                <SelectTrigger className={styles.cls017}>
-                  <SelectValue placeholder="Select export format" />
-                </SelectTrigger>
-                <SelectContent className={styles.cls018}>
-                  {EXPORT_FORMATS.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className={styles.cls019}
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <div className={styles.configCard}>
+        <div className={styles.configStrip} />
+        <div className={styles.configHeader}>
+          <div className={styles.configHeaderRow}>
+            <span className={styles.configHeaderIconWrap}>
+              <Filter className={styles.configHeaderIcon} />
+            </span>
+            <div>
+              <p className={styles.configHeaderTitle}>Report Configuration</p>
+              <p className={styles.configHeaderBody}>Select type, date range, and format</p>
             </div>
           </div>
+        </div>
 
-          <div className={styles.cls020}>
-            <div className={styles.cls021}>
-              <p className={styles.cls022}>Selected Report</p>
-              <p className={styles.cls023}>{reportTypeLabel}</p>
-            </div>
-            <div className={styles.cls024}>
-              <CalendarDays className={styles.cls008} />
-              <div>
-                <p className={styles.cls022}>Date Range</p>
-                <p className={styles.cls025}>{selectedDateRangeLabel}</p>
-              </div>
-            </div>
-            <div className={styles.cls024}>
-              <Layers className={styles.cls008} />
-              <div>
-                <p className={styles.cls022}>Export As</p>
-                <p className={styles.cls025}>{exportFormat}</p>
-              </div>
-            </div>
+        <div className={styles.configBody}>
+          <div className={styles.selectGrid}>
+            <SelectField
+              label="Report Type"
+              icon={BarChart3}
+              value={reportType}
+              onValueChange={setReportType}
+              options={REPORT_TYPES}
+            />
+            <SelectField
+              label="Date Range"
+              icon={CalendarDays}
+              value={dateRange}
+              onValueChange={setDateRange}
+              options={DATE_RANGES}
+            />
+            <SelectField
+              label="Export Format"
+              icon={Layers}
+              value={exportFormat}
+              onValueChange={setExportFormat}
+              options={EXPORT_FORMATS}
+            />
           </div>
 
-          <div className={styles.cls026}>
-            <Button
+          <div className={styles.summaryGrid}>
+            <SummaryChip
+              icon={BarChart3}
+              label="Report"
+              value={reportTypeLabel}
+              color="emerald"
+            />
+            <SummaryChip
+              icon={CalendarDays}
+              label="Period"
+              value={selectedDateRangeLabel}
+              color="blue"
+            />
+            <SummaryChip
+              icon={Layers}
+              label="Format"
+              value={exportFormatLabel}
+              color="amber"
+            />
+          </div>
+
+          <div className={styles.actionsGrid}>
+            <button
               onClick={handleGenerateReport}
               disabled={isGenerating}
-              className={styles.cls027}
+              className={styles.primaryButton}
             >
-              <FileText className={styles.cls028} />
-              {isGenerating ? "Generating..." : "Generate Report"}
-            </Button>
-
-            <Button
+              {isGenerating ? (
+                <>
+                  <Loader2 className={styles.loadingIcon} />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className={styles.actionIcon} />
+                  Generate Report
+                </>
+              )}
+            </button>
+            <button
               onClick={handleExportReport}
               disabled={isExporting}
-              variant="outline"
-              className={styles.cls029}
+              className={styles.secondaryButton}
             >
-              <Download className={styles.cls028} />
-              {isExporting ? "Exporting..." : "Export Report"}
-            </Button>
+              {isExporting ? (
+                <>
+                  <Loader2 className={styles.loadingIcon} />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className={styles.actionIcon} />
+                  Export Report
+                </>
+              )}
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {generatedReport && (
-        <Card className={styles.cls010}>
-          <CardHeader>
-            <div className={styles.cls030}>
-              <div>
-                <CardTitle className={styles.cls031}>{reportTypeLabel}</CardTitle>
-                <CardDescription>
-                  Generated at{" "}
-                  {generatedReport.generatedAt
-                    ? new Date(generatedReport.generatedAt).toLocaleString()
-                    : "-"}
-                </CardDescription>
-              </div>
-              <div className={styles.cls032}>
-                <span className={styles.cls033}>
-                  Total records: {generatedReport.totalRecords}
-                </span>
-              </div>
+        <div className={styles.resultsCard}>
+          <div className={styles.resultsHeader}>
+            <div>
+              <p className={styles.resultsTitle}>{reportTypeLabel}</p>
+              <p className={styles.resultsSub}>
+                Generated{" "}
+                {generatedReport.generatedAt
+                  ? new Date(generatedReport.generatedAt).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "-"}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className={styles.cls034}>
-              <Table className={styles.cls035}>
-                <TableHeader className={styles.cls036}>
-                  <TableRow className={styles.cls037}>
-                    <TableHead className={styles.cls038}>Category</TableHead>
-                    <TableHead className={styles.cls038}>Count</TableHead>
-                    <TableHead className={styles.cls038}>Percentage</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {generatedReport.data.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className={styles.cls039}>
-                        No records found for the selected filters.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    generatedReport.data.map((item, idx) => (
-                      <TableRow
-                        key={`${item.category}-${idx}`}
-                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
-                      >
-                        <TableCell className={styles.cls040}>
-                          {item.category}
-                        </TableCell>
-                        <TableCell>
-                          <span className={styles.cls041}>
-                            {item.count}
+            <div className={styles.recordsBadge}>
+              {generatedReport.totalRecords.toLocaleString()} records
+            </div>
+          </div>
+
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr className={styles.tableHeadRow}>
+                  <th className={styles.tableHead}>Category</th>
+                  <th className={styles.tableHead}>Count</th>
+                  <th className={`${styles.tableHead} ${styles.tableHeadWide}`}>
+                    Percentage
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {generatedReport.data.length === 0 ? (
+                  <tr>
+                    <td colSpan={3}>
+                      <div className={styles.emptyState}>
+                        <FileText className={styles.emptyIcon} />
+                        <p className={styles.emptyText}>No records found for the selected filters.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  generatedReport.data.map((item, index) => {
+                    const pct = Math.min(100, Math.max(0, Number(item.percentage) || 0));
+
+                    return (
+                      <tr key={`${item.category}-${index}`} className={getTableRowClass(index)}>
+                        <td className={styles.categoryCell}>{item.category}</td>
+                        <td className={styles.countCell}>
+                          <span className={styles.countBadge}>
+                            {item.count.toLocaleString()}
                           </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className={styles.cls042}>
-                            <div className={styles.cls043}>
+                        </td>
+                        <td className={styles.percentCell}>
+                          <div className={styles.percentRow}>
+                            <div className={styles.percentTrack}>
                               <div
-                                className={styles.cls044}
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    Math.max(0, Number(item.percentage) || 0)
-                                  )}%`,
-                                }}
+                                className={styles.percentFill}
+                                style={getPercentWidthStyle(pct)}
                               />
                             </div>
-                            <span className={styles.cls045}>
-                              {Number(item.percentage).toFixed(2)}%
-                            </span>
+                            <span className={styles.percentValue}>{pct.toFixed(2)}%</span>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={styles.footer}>
+            <p className={styles.footerText}>
+              {generatedReport.data.length} categories displayed
+            </p>
+            <button
+              onClick={handleExportReport}
+              disabled={isExporting}
+              className={styles.footerButton}
+            >
+              <Download className={styles.footerIcon} />
+              {isExporting ? "Exporting..." : `Export as ${exportFormat}`}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
 export default ReportsGeneration;
-
-
